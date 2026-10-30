@@ -3,6 +3,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 namespace Drone.Core.Authorization {
+    
     public sealed class AuthorizationGate : IFlightClearance, IDisposable {
         
         private const string AUTH_CANCELLED = "Authorization cancelled by provider";

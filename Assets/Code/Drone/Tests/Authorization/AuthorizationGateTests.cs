@@ -3,6 +3,7 @@ using Drone.Core.Authorization;
 using NUnit.Framework;
 
 namespace Drone.Tests {
+    
     public class AuthorizationGateTests {
 
         private FakeAuthorizationProvider _authProvider;

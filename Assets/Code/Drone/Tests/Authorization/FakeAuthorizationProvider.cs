@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Drone.Core.Authorization;
 
 namespace Drone.Tests {
+    
     sealed class FakeAuthorizationProvider : IAuthorizationProvider {
         
         private readonly TaskCompletionSource<AuthResult> _completion = new ();
