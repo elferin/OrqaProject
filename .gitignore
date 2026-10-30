@@ -115,3 +115,6 @@ InitTestScene*.unity*
 
 # Rider project files
 .idea/
+
+# Local Unity AI Assistant settings
+/ProjectSettings/Packages/com.unity.ai.assistant/
