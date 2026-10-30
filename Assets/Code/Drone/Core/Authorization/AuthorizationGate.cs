@@ -28,7 +28,7 @@ namespace Drone.Core.Authorization {
                 _attempt = Task.FromException<AuthResult>(e);
             }
             
-            Pump();
+            ApplyCompletedAttempt();
         }
         
         public void Revoke() {
@@ -37,7 +37,13 @@ namespace Drone.Core.Authorization {
             SetState(AuthState.Unauthorized);
         }
 
-        public void Pump() {
+        public void Pump() => ApplyCompletedAttempt();
+
+        public void Dispose() {
+            CancelCurrentAttempt();
+        }
+        
+        private void ApplyCompletedAttempt() {
             if (_attempt == null || !_attempt.IsCompleted) return;
 
             var attempt = _attempt;
@@ -60,10 +66,6 @@ namespace Drone.Core.Authorization {
             SetState(AuthState.Denied);
         }
 
-        public void Dispose() {
-            CancelCurrentAttempt();
-        }
-        
         private void CancelCurrentAttempt() {
             _attempt = null;
             
