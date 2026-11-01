@@ -3,7 +3,7 @@
     "rootNamespace": "Drone.Tests",
     "references": [
         "GUID:a92a28ce78e1e8e4096e67cbb9fce4dd",
-        "Drone.Providers",
+        "GUID:3fccaa15507fd2e4e81e53fa0de882fc",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],
