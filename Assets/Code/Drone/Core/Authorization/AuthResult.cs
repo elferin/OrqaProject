@@ -10,7 +10,7 @@ namespace Drone.Core.Authorization {
             Reason = reason;
         }
 
-        public static AuthResult Success() => new AuthResult(true, null);
-        public static AuthResult Denied(string reason) => new AuthResult(false, reason);
+        public static AuthResult Success() => new (true, null);
+        public static AuthResult Denied(string reason) => new (false, reason);
     }
 }
