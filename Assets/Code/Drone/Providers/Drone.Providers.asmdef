@@ -1,0 +1,16 @@
+{
+    "name": "Drone.Providers",
+    "rootNamespace": "Drone.Providers",
+    "references": [
+        "GUID:a92a28ce78e1e8e4096e67cbb9fce4dd"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": true
+}
