@@ -63,10 +63,14 @@ namespace Drone.App {
 
         private void OnDestroy() {
             
-            foreach (var frontend in _droneFrontends) {
-                frontend.Detach();
+            try {
+                foreach (var frontend in _droneFrontends) {
+                    frontend.Detach();
+                }
             }
-            _session.Dispose();
+            finally {
+                _session.Dispose();
+            }
         }
 
         private static bool IsAlive(IDroneFrontend frontend) {

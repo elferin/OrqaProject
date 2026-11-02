@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Drone.Core.Authorization;
@@ -174,6 +175,19 @@ namespace Drone.App.Tests {
             var provider = new ControlledProvider();
             StartWithFrontend(true, FactoryFor(provider));
             Assert.IsFalse(provider.LastToken.IsCancellationRequested);
+
+            Object.Destroy(_root);
+            yield return null;
+
+            Assert.IsTrue(provider.LastToken.IsCancellationRequested);
+        }
+
+        [UnityTest]
+        public IEnumerator OnDestroy_ThrowingDetach_StillCancelsThePendingAttempt() {
+            var provider = new ControlledProvider();
+            var frontend = StartWithFrontend(true, FactoryFor(provider));
+            frontend.ThrowOnDetach = true;
+            LogAssert.Expect(LogType.Exception, new Regex("Detach failed"));
 
             Object.Destroy(_root);
             yield return null;

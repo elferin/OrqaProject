@@ -11,6 +11,7 @@ namespace Drone.App.Tests {
         public int FrameTicks { get; private set; }
         public int DetachCount { get; private set; }
         public bool SessionWasLiveAtDetach { get; private set; }
+        public bool ThrowOnDetach { get; set; }
 
         public void Attach(DroneSession session) {
             Session = session;
@@ -24,6 +25,9 @@ namespace Drone.App.Tests {
         public void Detach() {
             DetachCount++;
             SessionWasLiveAtDetach = Session.ActiveSource != null;
+            if (ThrowOnDetach) {
+                throw new System.InvalidOperationException("Detach failed");
+            }
         }
     }
 }

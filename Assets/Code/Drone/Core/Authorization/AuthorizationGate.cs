@@ -74,9 +74,15 @@ namespace Drone.Core.Authorization {
                 return;
             }
 
-            _cts.Cancel();
-            _cts.Dispose();
-            _cts = null;
+            try {
+                _cts.Cancel();
+            }
+            catch (AggregateException) {
+            }
+            finally {
+                _cts.Dispose();
+                _cts = null;
+            }
         }
         
         private void SetState(AuthState state) {
