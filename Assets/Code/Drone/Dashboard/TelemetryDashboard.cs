@@ -1,27 +1,52 @@
 using Drone.Core.Authorization;
 using Drone.Core.Flight;
+using Drone.Core.Session;
 using TMPro;
 using UnityEngine;
 
 namespace Drone.Dashboard {
 
-    public sealed class TelemetryDashboard : MonoBehaviour {
+    public sealed class TelemetryDashboard : MonoBehaviour, IDroneFrontend {
 
         private const float REFRESH_INTERVAL = 0.1f;
         private const int TENTHS = 10;
+        private const string SOURCE_SUFFIX = "InputSource";
 
         [SerializeField] private TMP_Text authText;
         [SerializeField] private TMP_Text reasonText;
         [SerializeField] private TMP_Text flightText;
+        [SerializeField] private TMP_Text inputText;
         [SerializeField] private TMP_Text altitudeText;
         [SerializeField] private TMP_Text speedText;
 
+        private DroneSession _session;
+        
         private float _timeUntilRefresh;
         private AuthState? _shownAuthState;
         private string _shownReason;
         private FlightState? _shownFlightState;
+        private IFlightInputSource _shownSource;
         private int? _shownAltitudeTenths;
         private int? _shownSpeedTenths;
+        
+
+        public void Attach(DroneSession session) => _session = session;
+        
+        public void FixedTick() { }
+        
+        public void FrameTick(float deltaTime) {
+            var source = _session.Router.Source;
+            if (_shownSource != source) {
+                _shownSource = source;
+                inputText.text = source == null
+                    ? "Input: None"
+                    : "Input: " + source.GetType().Name.Replace(SOURCE_SUFFIX, string.Empty);
+            }
+
+            Tick(deltaTime, _session.Gate.State, _session.Gate.LastFailureReason, _session.Controller.Telemetry);
+        }
+        
+        public void Detach() => _session = null;
 
         public void Tick(float deltaTime, AuthState authState, string failureReason, TelemetrySnapshot telemetry) {
             _timeUntilRefresh -= deltaTime;
@@ -58,7 +83,6 @@ namespace Drone.Dashboard {
             }
         }
 
-        // A switch rather than ToString, which allocates a new string on each call.
         private static string AuthLabel(AuthState state) {
             switch (state) {
                 case AuthState.Unauthorized: return "Auth: Unauthorized";

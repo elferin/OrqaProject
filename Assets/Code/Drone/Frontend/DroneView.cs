@@ -24,7 +24,6 @@ namespace Drone.Frontend {
             _transform.localScale = new Vector3(1f, 0.2f, 1f);
         }
 
-        // Call from FixedUpdate, after the controller has ticked.
         public void Capture(TelemetrySnapshot telemetry) {
             _previousPosition = _currentPosition;
             _previousRotation = _currentRotation;
@@ -32,7 +31,6 @@ namespace Drone.Frontend {
             _currentRotation = Quaternion.Euler(0f, telemetry.Heading * Mathf.Rad2Deg, 0f);
         }
 
-        // Call from Update. Draws between the last two ticks, so the view runs up to one tick behind.
         public void Render() {
             var blend = Mathf.Clamp01((Time.time - Time.fixedTime) / Time.fixedDeltaTime);
             _transform.SetPositionAndRotation(

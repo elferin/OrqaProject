@@ -3,7 +3,9 @@ namespace Drone.Core.Flight {
     public sealed class FlightInputRouter : IFlightInputSource {
         
         private IFlightInputSource _inputSource;
-        
+
+        public IFlightInputSource Source => _inputSource;
+
         public FlightInput Sample() {
             
             if (_inputSource is null) {

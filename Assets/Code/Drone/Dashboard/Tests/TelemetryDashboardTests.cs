@@ -2,6 +2,7 @@ using System.Collections;
 using System.Numerics;
 using Drone.Core.Authorization;
 using Drone.Core.Flight;
+using Drone.Core.Session;
 using NUnit.Framework;
 using TMPro;
 using UnityEngine;
@@ -12,11 +13,9 @@ using Vector3 = System.Numerics.Vector3;
 
 namespace Drone.Dashboard.Tests {
 
-    // Loads the real prefab, so a text field left unassigned fails here rather than at runtime.
-    // Play Mode only, because Object.Destroy is refused in Edit Mode.
     public class TelemetryDashboardTests {
 
-        private const string PREFAB_NAME = "TelemetryDashboard";
+        private const string PREFAB_NAME = "Dashboard/TelemetryDashboard";
         private const float PAST_INTERVAL = 1f;
         private const float WITHIN_INTERVAL = 0.01f;
 
@@ -40,6 +39,28 @@ namespace Drone.Dashboard.Tests {
 
         private string Line(string lineName) {
             return _dashboard.transform.Find(lineName).GetComponent<TMP_Text>().text;
+        }
+
+        private sealed class AlphaInputSource : IFlightInputSource {
+            public FlightInput Sample() => default;
+        }
+
+        private sealed class BetaInputSource : IFlightInputSource {
+            public FlightInput Sample() => default;
+        }
+
+        [Test]
+        public void FrameTick_SourceChanges_ShowsTheActiveSource() {
+            using var session = new DroneSession(new IAuthorizationProvider[0]);
+            session.AddInputSource(new AlphaInputSource());
+            _dashboard.Attach(session);
+
+            _dashboard.FrameTick(WITHIN_INTERVAL);
+            Assert.AreEqual("Input: Alpha", Line("Input"));
+
+            session.Router.SetSource(new BetaInputSource());
+            _dashboard.FrameTick(WITHIN_INTERVAL);
+            Assert.AreEqual("Input: Beta", Line("Input"));
         }
 
         [Test]
@@ -90,7 +111,6 @@ namespace Drone.Dashboard.Tests {
                 Is.Not.AllocatingGCMemory());
         }
 
-        // Player only, because TMP's SetText builds a string under #if UNITY_EDITOR.
         [Test]
         [UnityPlatform(exclude = new[] { RuntimePlatform.WindowsEditor, RuntimePlatform.OSXEditor, RuntimePlatform.LinuxEditor })]
         public void Tick_NumbersChanging_AllocatesNothing() {

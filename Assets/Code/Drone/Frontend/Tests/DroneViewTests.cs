@@ -6,7 +6,6 @@ using UnityEngine.TestTools;
 
 namespace Drone.Frontend.Tests {
 
-    // Play Mode only, because DroneView uses Object.Destroy, which Unity refuses in Edit Mode.
     public class DroneViewTests {
 
         private DroneView _view;
@@ -16,7 +15,6 @@ namespace Drone.Frontend.Tests {
             _view = new DroneView();
         }
 
-        // Destroy only takes effect at the end of the frame, so wait or the next test finds this cube.
         [UnityTearDown]
         public IEnumerator TearDown() {
             _view.Dispose();

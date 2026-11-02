@@ -1,0 +1,17 @@
+{
+    "name": "Drone.App",
+    "rootNamespace": "Drone.App",
+    "references": [
+        "GUID:a92a28ce78e1e8e4096e67cbb9fce4dd",
+        "GUID:3fccaa15507fd2e4e81e53fa0de882fc"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
