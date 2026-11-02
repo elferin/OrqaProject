@@ -174,10 +174,10 @@ namespace Drone.Frontend.Tests {
             var controls = new OperatorControls(_session);
 
             PressOnce(_keyboard.tabKey, controls);
-            Assert.AreEqual(0.9f, _session.Router.Sample().Yaw, 0.001f);
+            Assert.AreEqual(0.9f, _session.ActiveSource.Sample().Yaw, 0.001f);
 
             PressOnce(_keyboard.tabKey, controls);
-            Assert.AreEqual(0.5f, _session.Router.Sample().Yaw, 0.001f);
+            Assert.AreEqual(0.5f, _session.ActiveSource.Sample().Yaw, 0.001f);
         }
 
         [Test]
@@ -189,7 +189,7 @@ namespace Drone.Frontend.Tests {
 
             PressOnce(_keyboard.tabKey, controls);
 
-            Assert.AreEqual(0.9f, _session.Router.Sample().Yaw, 0.001f);
+            Assert.AreEqual(0.9f, _session.ActiveSource.Sample().Yaw, 0.001f);
         }
     }
 }

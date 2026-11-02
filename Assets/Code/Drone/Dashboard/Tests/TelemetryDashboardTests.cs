@@ -53,12 +53,13 @@ namespace Drone.Dashboard.Tests {
         public void FrameTick_SourceChanges_ShowsTheActiveSource() {
             using var session = new DroneSession(new IAuthorizationProvider[0]);
             session.AddInputSource(new AlphaInputSource());
+            session.AddInputSource(new BetaInputSource());
             _dashboard.Attach(session);
 
             _dashboard.FrameTick(WITHIN_INTERVAL);
             Assert.AreEqual("Input: Alpha", Line("Input"));
 
-            session.Router.SetSource(new BetaInputSource());
+            session.SelectNextInputSource();
             _dashboard.FrameTick(WITHIN_INTERVAL);
             Assert.AreEqual("Input: Beta", Line("Input"));
         }

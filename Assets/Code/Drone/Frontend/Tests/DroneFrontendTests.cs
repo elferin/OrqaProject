@@ -29,8 +29,7 @@ namespace Drone.Frontend.Tests {
 
         [Test]
         public void Attach_AddsTheKeyboardAsASource() {
-            Assert.AreEqual(1, _session.InputSources.Count);
-            Assert.IsInstanceOf<KeyboardInputSource>(_session.InputSources[0]);
+            Assert.IsInstanceOf<KeyboardInputSource>(_session.ActiveSource);
         }
 
         [Test]

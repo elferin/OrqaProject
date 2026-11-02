@@ -9,8 +9,6 @@ namespace Drone.Frontend {
 
         private readonly DroneSession _session;
 
-        private int _sourceIndex;
-
         public OperatorControls(DroneSession session) {
             _session = session;
         }
@@ -40,9 +38,8 @@ namespace Drone.Frontend {
                 _session.Controller.Disarm();
             }
 
-            if (keyboard.tabKey.wasPressedThisFrame && _session.InputSources.Count > 0) {
-                _sourceIndex = (_sourceIndex + 1) % _session.InputSources.Count;
-                _session.Router.SetSource(_session.InputSources[_sourceIndex]);
+            if (keyboard.tabKey.wasPressedThisFrame) {
+                _session.SelectNextInputSource();
             }
         }
     }

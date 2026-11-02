@@ -5,7 +5,7 @@ using UnityEngine;
 namespace Drone.App {
     
     [CreateAssetMenu(menuName = "Drone/Guest Provider")]
-    public class GuestAuthorizationProviderFactory : AuthorizationProviderFactory {
+    public sealed class GuestAuthorizationProviderFactory : AuthorizationProviderFactory {
         
         public override IAuthorizationProvider Create() {
             return new GuestAuthorizationProvider();

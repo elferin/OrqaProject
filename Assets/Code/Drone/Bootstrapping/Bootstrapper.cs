@@ -6,12 +6,12 @@ using UnityEngine;
 
 namespace Drone.App {
     
-    public class Bootstrapper : MonoBehaviour {
+    public sealed class Bootstrapper : MonoBehaviour {
         
         [SerializeField] private bool autoStart;
         [SerializeField] private float autopilotAltitude = 3f;
     
-        [SerializeField] private AuthorizationProviderFactory[] authorizationProviderFactories;
+        [SerializeField] private AuthorizationProviderFactory[] authorizationProviderFactories = new AuthorizationProviderFactory[0];
         
         private DroneSession _session;
         private IDroneFrontend[] _droneFrontends;
@@ -38,7 +38,9 @@ namespace Drone.App {
         private void Update() {
             
             foreach (var frontend in _droneFrontends) {
-                frontend.FrameTick(Time.unscaledDeltaTime);
+                if (IsAlive(frontend)) {
+                    frontend.FrameTick(Time.unscaledDeltaTime);
+                }
             }
         }
 
@@ -52,7 +54,9 @@ namespace Drone.App {
             }
             
             foreach (var frontend in _droneFrontends) {
-                frontend.FixedTick();
+                if (IsAlive(frontend)) {
+                    frontend.FixedTick();
+                }
             }
             
         }
@@ -63,6 +67,11 @@ namespace Drone.App {
                 frontend.Detach();
             }
             _session.Dispose();
+        }
+
+        private static bool IsAlive(IDroneFrontend frontend) {
+
+            return !(frontend is Object unityObject) || unityObject != null;
         }
 
         private IReadOnlyList<IAuthorizationProvider> CreateProviders() {

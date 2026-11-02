@@ -5,19 +5,24 @@ using Drone.Core.Flight;
 
 namespace Drone.Core.Session {
     
-    public class DroneSession : IDisposable {
+    public sealed class DroneSession : IDisposable, IDroneReadout {
         public AuthorizationGate Gate { get; }
-        public FlightInputRouter Router { get; }
         public FlightController Controller { get; }
         public IReadOnlyList<IAuthorizationProvider> Providers { get; }
+        private readonly FlightInputRouter _router;
         private readonly List<IFlightInputSource> _inputSources = new();
-        public IReadOnlyList<IFlightInputSource> InputSources => _inputSources;
+        private int _activeSourceIndex;
+
+        public AuthState AuthState => Gate.State;
+        public string FailureReason => Gate.LastFailureReason;
+        public TelemetrySnapshot Telemetry => Controller.Telemetry;
+        public IFlightInputSource ActiveSource => _router.Source;
 
         public DroneSession(IReadOnlyList<IAuthorizationProvider> providers) {
 
             Gate = new AuthorizationGate();
-            Router = new FlightInputRouter();
-            Controller = new FlightController(Gate, Router);
+            _router = new FlightInputRouter();
+            Controller = new FlightController(Gate, _router);
 
             Providers = providers;
         }
@@ -27,8 +32,18 @@ namespace Drone.Core.Session {
             _inputSources.Add(flightInputSource);
             
             if (_inputSources.Count == 1) {
-                Router.SetSource(flightInputSource);
+                _router.SetSource(flightInputSource);
             }
+        }
+
+        public void SelectNextInputSource() {
+
+            if (_inputSources.Count == 0) {
+                return;
+            }
+
+            _activeSourceIndex = (_activeSourceIndex + 1) % _inputSources.Count;
+            _router.SetSource(_inputSources[_activeSourceIndex]);
         }
 
         public void Tick(float deltaTime) {
@@ -39,7 +54,7 @@ namespace Drone.Core.Session {
 
         public void Dispose() {
             
-            Router.SetSource(null);
+            _router.SetSource(null);
             Gate.Dispose();
         }
     }

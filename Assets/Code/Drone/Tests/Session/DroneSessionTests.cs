@@ -19,7 +19,7 @@ namespace Drone.Tests {
 
             session.AddInputSource(source);
 
-            Assert.AreEqual(0.5f, session.Router.Sample().Yaw, 0.001f);
+            Assert.AreEqual(0.5f, session.ActiveSource.Sample().Yaw, 0.001f);
         }
 
         [Test]
@@ -29,8 +29,28 @@ namespace Drone.Tests {
 
             session.AddInputSource(new FakeInputSource { Input = new FlightInput(Vector3.Zero, 0.9f) });
 
-            Assert.AreEqual(2, session.InputSources.Count);
-            Assert.AreEqual(0.5f, session.Router.Sample().Yaw, 0.001f);
+            Assert.AreEqual(0.5f, session.ActiveSource.Sample().Yaw, 0.001f);
+        }
+
+        [Test]
+        public void SelectNextInputSource_TwoSources_CyclesAndWraps() {
+            using var session = CreateSession();
+            session.AddInputSource(new FakeInputSource { Input = new FlightInput(Vector3.Zero, 0.5f) });
+            session.AddInputSource(new FakeInputSource { Input = new FlightInput(Vector3.Zero, 0.9f) });
+
+            session.SelectNextInputSource();
+            Assert.AreEqual(0.9f, session.ActiveSource.Sample().Yaw, 0.001f);
+
+            session.SelectNextInputSource();
+            Assert.AreEqual(0.5f, session.ActiveSource.Sample().Yaw, 0.001f);
+        }
+
+        [Test]
+        public void SelectNextInputSource_NoSources_DoesNothing() {
+            using var session = CreateSession();
+
+            Assert.DoesNotThrow(() => session.SelectNextInputSource());
+            Assert.IsNull(session.ActiveSource);
         }
 
         [Test]
@@ -78,7 +98,7 @@ namespace Drone.Tests {
 
             session.Dispose();
 
-            Assert.AreEqual(0f, session.Router.Sample().Yaw, 0.001f);
+            Assert.IsNull(session.ActiveSource);
         }
     }
 }

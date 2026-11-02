@@ -19,7 +19,7 @@ namespace Drone.Dashboard {
         [SerializeField] private TMP_Text altitudeText;
         [SerializeField] private TMP_Text speedText;
 
-        private DroneSession _session;
+        private IDroneReadout _readout;
         
         private float _timeUntilRefresh;
         private AuthState? _shownAuthState;
@@ -30,12 +30,12 @@ namespace Drone.Dashboard {
         private int? _shownSpeedTenths;
         
 
-        public void Attach(DroneSession session) => _session = session;
+        public void Attach(DroneSession session) => _readout = session;
         
         public void FixedTick() { }
         
         public void FrameTick(float deltaTime) {
-            var source = _session.Router.Source;
+            var source = _readout.ActiveSource;
             if (_shownSource != source) {
                 _shownSource = source;
                 inputText.text = source == null
@@ -43,10 +43,10 @@ namespace Drone.Dashboard {
                     : "Input: " + source.GetType().Name.Replace(SOURCE_SUFFIX, string.Empty);
             }
 
-            Tick(deltaTime, _session.Gate.State, _session.Gate.LastFailureReason, _session.Controller.Telemetry);
+            Tick(deltaTime, _readout.AuthState, _readout.FailureReason, _readout.Telemetry);
         }
         
-        public void Detach() => _session = null;
+        public void Detach() => _readout = null;
 
         public void Tick(float deltaTime, AuthState authState, string failureReason, TelemetrySnapshot telemetry) {
             _timeUntilRefresh -= deltaTime;
