@@ -330,7 +330,7 @@ namespace Drone.App.Tests {
         }
 
         [UnityTest]
-        public IEnumerator Awake_ThrowingAttach_LogsAndNeverTicksThatFrontend() {
+        public IEnumerator Awake_ThrowingAttach_LogsDetachesAndNeverTicksThatFrontend() {
             CreateRoot();
             var broken = AddFrontend();
             var working = AddFrontend();
@@ -341,6 +341,7 @@ namespace Drone.App.Tests {
             yield return WaitFixedTicks(2);
             yield return null;
 
+            Assert.AreEqual(1, broken.DetachCount);
             Assert.AreEqual(0, broken.FixedTicks);
             Assert.AreEqual(0, broken.FrameTicks);
             Assert.Greater(working.FixedTicks, 0);

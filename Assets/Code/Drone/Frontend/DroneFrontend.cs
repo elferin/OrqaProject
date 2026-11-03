@@ -33,7 +33,7 @@ namespace Drone.Frontend {
             }
 
             _session.RemoveInputSource(_keyboard);
-            _view.Dispose();
+            _view?.Dispose();
             _session = null;
             _keyboard = null;
             _controls = null;

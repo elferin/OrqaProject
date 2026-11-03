@@ -39,6 +39,7 @@ namespace Drone.App {
                 }
                 catch (Exception exception) {
                     Debug.LogException(exception, this);
+                    DetachSafely(frontend);
                 }
             }
 
@@ -49,6 +50,7 @@ namespace Drone.App {
                 }
                 catch (Exception exception) {
                     Debug.LogException(exception, this);
+                    DetachSafely(display);
                 }
             }
 
