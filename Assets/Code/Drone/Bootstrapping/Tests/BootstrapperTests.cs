@@ -296,5 +296,90 @@ namespace Drone.App.Tests {
 
             Assert.AreEqual(0, frontend.Session.Providers.Count);
         }
+
+        [Test]
+        public void Awake_ThrowingFactory_LogsAndKeepsTheOthers() {
+            var broken = FactoryFor(null);
+            broken.ThrowOnCreate = true;
+            LogAssert.Expect(LogType.Exception, new Regex("Create failed"));
+
+            var frontend = StartWithFrontend(false, broken, FactoryFor(new InstantProvider(AuthResult.Success())));
+
+            Assert.AreEqual(1, frontend.Session.Providers.Count);
+        }
+
+        [UnityTest]
+        public IEnumerator Awake_ThrowingAttach_LogsAndNeverTicksThatFrontend() {
+            CreateRoot();
+            var broken = AddFrontend();
+            var working = AddFrontend();
+            broken.ThrowOnAttach = true;
+            LogAssert.Expect(LogType.Exception, new Regex("Attach failed"));
+
+            Start(false, FactoryFor(new InstantProvider(AuthResult.Success())));
+            yield return WaitFixedTicks(2);
+            yield return null;
+
+            Assert.AreEqual(0, broken.FixedTicks);
+            Assert.AreEqual(0, broken.FrameTicks);
+            Assert.Greater(working.FixedTicks, 0);
+            Assert.Greater(working.FrameTicks, 0);
+        }
+
+        [UnityTest]
+        public IEnumerator Running_ThrowingFrameTick_IsDroppedAndDetachedOnce() {
+            CreateRoot();
+            var broken = AddFrontend();
+            var survivor = AddFrontend();
+            broken.ThrowOnFrameTick = true;
+            LogAssert.Expect(LogType.Exception, new Regex("FrameTick failed"));
+
+            Start(false, FactoryFor(new InstantProvider(AuthResult.Success())));
+            yield return null;
+            yield return null;
+            yield return null;
+
+            Assert.AreEqual(1, broken.FrameTicks);
+            Assert.AreEqual(1, broken.DetachCount);
+            Assert.Greater(survivor.FrameTicks, 1);
+
+            Object.Destroy(_root);
+            yield return null;
+
+            Assert.AreEqual(1, broken.DetachCount);
+            LogAssert.NoUnexpectedReceived();
+        }
+
+        [UnityTest]
+        public IEnumerator Running_ThrowingFixedTick_IsDroppedAndOthersKeepTicking() {
+            CreateRoot();
+            var broken = AddFrontend();
+            var survivor = AddFrontend();
+            broken.ThrowOnFixedTick = true;
+            LogAssert.Expect(LogType.Exception, new Regex("FixedTick failed"));
+
+            Start(false, FactoryFor(new InstantProvider(AuthResult.Success())));
+            yield return WaitFixedTicks(3);
+
+            Assert.AreEqual(1, broken.FixedTicks);
+            Assert.AreEqual(1, broken.DetachCount);
+            Assert.Greater(survivor.FixedTicks, 1);
+            LogAssert.NoUnexpectedReceived();
+        }
+
+        [UnityTest]
+        public IEnumerator OnDestroy_ThrowingDetach_StillDetachesTheOthers() {
+            CreateRoot();
+            var broken = AddFrontend();
+            var other = AddFrontend();
+            broken.ThrowOnDetach = true;
+            Start(false, FactoryFor(new InstantProvider(AuthResult.Success())));
+            LogAssert.Expect(LogType.Exception, new Regex("Detach failed"));
+
+            Object.Destroy(_root);
+            yield return null;
+
+            Assert.AreEqual(1, other.DetachCount);
+        }
     }
 }
