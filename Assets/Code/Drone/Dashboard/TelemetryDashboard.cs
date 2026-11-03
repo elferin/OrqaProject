@@ -21,70 +21,75 @@ namespace Drone.Dashboard {
         [SerializeField] private TMP_Text speedText;
 
         private IDroneReadout _readout;
-        
+
+        private bool _statusDirty;
         private float _timeUntilRefresh;
-        private AuthState? _shownAuthState;
-        private string _shownReason;
-        private FlightState? _shownFlightState;
-        private IFlightInputSource _shownSource;
-        private bool _shownFault;
         private int? _shownAltitudeTenths;
         private int? _shownSpeedTenths;
-        
 
-        public void Attach(DroneSession session) => _readout = session;
-        
+
+        public void Attach(DroneSession session) {
+            _readout = session;
+            _readout.AuthStateChanged += MarkStatusDirty;
+            _readout.FlightStateChanged += MarkStatusDirty;
+            _readout.InputChanged += MarkStatusDirty;
+            _statusDirty = true;
+        }
+
         public void FixedTick() { }
-        
+
         public void FrameTick(float deltaTime) {
-            var source = _readout.ActiveSource;
-            var fault = _readout.InputFaulted;
-            if (_shownSource != source || _shownFault != fault) {
-                _shownFault = fault;
-                _shownSource = source;
-                inputText.text = source == null
-                    ? "Input: None"
-                    : "Input: " + source.GetType().Name.Replace(SOURCE_SUFFIX, string.Empty) + (fault ? FAULT_SUFFIX : string.Empty);
+            if (_statusDirty) {
+                _statusDirty = false;
+                ShowStatus();
             }
 
-            Tick(deltaTime, _readout.AuthState, _readout.FailureReason, _readout.Telemetry);
+            var telemetry = _readout.Telemetry;
+            TickNumbers(deltaTime, telemetry.Altitude, telemetry.Speed);
         }
-        
-        public void Detach() => _readout = null;
 
-        public void Tick(float deltaTime, AuthState authState, string failureReason, TelemetrySnapshot telemetry) {
+        public void Detach() {
+            _readout.AuthStateChanged -= MarkStatusDirty;
+            _readout.FlightStateChanged -= MarkStatusDirty;
+            _readout.InputChanged -= MarkStatusDirty;
+            _readout = null;
+        }
+
+        public void TickNumbers(float deltaTime, float altitude, float speed) {
             _timeUntilRefresh -= deltaTime;
             if (_timeUntilRefresh > 0f) {
                 return;
             }
             _timeUntilRefresh = REFRESH_INTERVAL;
 
-            if (_shownAuthState != authState) {
-                _shownAuthState = authState;
-                authText.text = AuthLabel(authState);
-            }
-
-            if (_shownReason != failureReason) {
-                _shownReason = failureReason;
-                reasonText.text = failureReason;
-            }
-
-            if (_shownFlightState != telemetry.FlightState) {
-                _shownFlightState = telemetry.FlightState;
-                flightText.text = FlightLabel(telemetry.FlightState);
-            }
-
-            var altitudeTenths = Mathf.RoundToInt(telemetry.Altitude * TENTHS);
+            var altitudeTenths = Mathf.RoundToInt(altitude * TENTHS);
             if (_shownAltitudeTenths != altitudeTenths) {
                 _shownAltitudeTenths = altitudeTenths;
                 altitudeText.SetText("Altitude: {0:1} m", (float)altitudeTenths / TENTHS);
             }
 
-            var speedTenths = Mathf.RoundToInt(telemetry.Speed * TENTHS);
+            var speedTenths = Mathf.RoundToInt(speed * TENTHS);
             if (_shownSpeedTenths != speedTenths) {
                 _shownSpeedTenths = speedTenths;
                 speedText.SetText("Speed: {0:1} m/s", (float)speedTenths / TENTHS);
             }
+        }
+
+        private void MarkStatusDirty() => _statusDirty = true;
+
+        private void ShowStatus() {
+            authText.text = AuthLabel(_readout.AuthState);
+            reasonText.text = _readout.FailureReason;
+            flightText.text = FlightLabel(_readout.Telemetry.FlightState);
+            inputText.text = InputLabel(_readout.ActiveSource, _readout.InputFaulted);
+        }
+
+        private static string InputLabel(IFlightInputSource source, bool faulted) {
+            if (source == null) {
+                return "Input: None";
+            }
+
+            return "Input: " + source.GetType().Name.Replace(SOURCE_SUFFIX, string.Empty) + (faulted ? FAULT_SUFFIX : string.Empty);
         }
 
         private static string AuthLabel(AuthState state) {

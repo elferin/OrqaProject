@@ -16,6 +16,41 @@ namespace Drone.Tests {
         }
 
         [Test]
+        public void Events_ForwardGateControllerAndRouterChanges() {
+            using var session = CreateSession();
+            var provider = new FakeAuthorizationProvider();
+            var auth = 0;
+            var flight = 0;
+            var input = 0;
+            session.AuthStateChanged += () => auth++;
+            session.FlightStateChanged += () => flight++;
+            session.InputChanged += () => input++;
+
+            session.Gate.Request(provider);
+            provider.Complete(AuthResult.Success());
+            session.Tick(0.02f);
+            session.Controller.Arm();
+            session.AddInputSource(new FakeInputSource());
+
+            Assert.AreEqual(2, auth);
+            Assert.AreEqual(1, flight);
+            Assert.AreEqual(1, input);
+        }
+
+        [Test]
+        public void Events_AfterUnsubscribing_StopFiring() {
+            using var session = CreateSession();
+            var auth = 0;
+            void Handler() => auth++;
+            session.AuthStateChanged += Handler;
+
+            session.AuthStateChanged -= Handler;
+            session.Gate.Request(new FakeAuthorizationProvider());
+
+            Assert.AreEqual(0, auth);
+        }
+
+        [Test]
         public void AddInputSource_First_BecomesActive() {
             using var session = CreateSession();
             var source = new FakeInputSource { Input = new FlightInput(Vector3.Zero, 0.5f) };

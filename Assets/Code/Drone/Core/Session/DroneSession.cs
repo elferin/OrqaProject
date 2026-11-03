@@ -19,6 +19,21 @@ namespace Drone.Core.Session {
         public IFlightInputSource ActiveSource => _router.Source;
         public bool InputFaulted => _router.SourceFaulted;
 
+        public event Action AuthStateChanged {
+            add => Gate.StateChanged += value;
+            remove => Gate.StateChanged -= value;
+        }
+
+        public event Action FlightStateChanged {
+            add => Controller.StateChanged += value;
+            remove => Controller.StateChanged -= value;
+        }
+
+        public event Action InputChanged {
+            add => _router.Changed += value;
+            remove => _router.Changed -= value;
+        }
+
         public DroneSession(AuthorizationGate gate, FlightInputRouter router, FlightController controller, IReadOnlyList<IAuthorizationProvider> providers) {
 
             Gate = gate;

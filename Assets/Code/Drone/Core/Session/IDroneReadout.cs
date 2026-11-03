@@ -1,3 +1,4 @@
+using System;
 using Drone.Core.Authorization;
 using Drone.Core.Flight;
 
@@ -9,5 +10,8 @@ namespace Drone.Core.Session {
         TelemetrySnapshot Telemetry { get; }
         IFlightInputSource ActiveSource { get; }
         bool InputFaulted { get; }
+        event Action AuthStateChanged;
+        event Action FlightStateChanged;
+        event Action InputChanged;
     }
 }

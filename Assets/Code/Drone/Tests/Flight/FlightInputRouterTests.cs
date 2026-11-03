@@ -20,6 +20,52 @@ namespace Drone.Tests {
         }
 
         [Test]
+        public void Changed_OnSetSource_Fires() {
+            var router = new FlightInputRouter();
+            var changes = 0;
+            router.Changed += () => changes++;
+
+            router.SetSource(new FakeInputSource());
+
+            Assert.AreEqual(1, changes);
+        }
+
+        [Test]
+        public void Changed_SameSourceSetAgain_DoesNotFire() {
+            var router = new FlightInputRouter();
+            var source = new FakeInputSource();
+            router.SetSource(source);
+            var changes = 0;
+            router.Changed += () => changes++;
+
+            router.SetSource(source);
+
+            Assert.AreEqual(0, changes);
+        }
+
+        [Test]
+        public void Changed_RepeatedFaults_FiresOnce() {
+            var router = new FlightInputRouter();
+            router.SetSource(new ThrowingInputSource());
+            var changes = 0;
+            router.Changed += () => changes++;
+
+            router.Sample();
+            router.Sample();
+
+            Assert.AreEqual(1, changes);
+        }
+
+        [Test]
+        public void Changed_SubscriberThrows_IsNotReportedAsASourceFault() {
+            var router = new FlightInputRouter();
+            router.SetSource(new FakeInputSource { Input = new FlightInput(new Vector3(float.NaN, 0f, 0f), 0f) });
+            router.Changed += () => throw new InvalidOperationException("Handler failed");
+
+            Assert.Throws<InvalidOperationException>(() => router.Sample());
+        }
+
+        [Test]
         public void Sample_SourceThrows_ReturnsNeutralAndReportsTheFault() {
             var router = new FlightInputRouter();
             router.SetSource(new ThrowingInputSource());

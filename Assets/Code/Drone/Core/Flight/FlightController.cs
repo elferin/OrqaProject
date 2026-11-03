@@ -15,6 +15,7 @@ namespace Drone.Core.Flight {
         private Vector3 _velocity;
         private float _heading;
         public TelemetrySnapshot Telemetry => new (_flightState, _position.Y, _velocity.Length(), _position, _heading);
+        public event Action StateChanged;
 
         public FlightController(IFlightClearance flightClearance, IFlightInputSource flightInputSource, FlightProfile profile) {
             if (!profile.IsValid) {
@@ -31,17 +32,17 @@ namespace Drone.Core.Flight {
                 return;
             }
             
-            _flightState = FlightState.Armed;
+            SetState(FlightState.Armed);
         }
 
         public void Disarm() {
             if (_flightState == FlightState.Armed) {
-                _flightState = FlightState.Grounded;
+                SetState(FlightState.Grounded);
                 return;
             }
             
             if (_flightState == FlightState.Flying) {
-                _flightState = FlightState.Landing;
+                SetState(FlightState.Landing);
             }
         }
 
@@ -52,12 +53,12 @@ namespace Drone.Core.Flight {
 
             if (!_flightClearance.IsCleared) {
                 if (_flightState == FlightState.Armed) {
-                    _flightState = FlightState.Grounded;
+                    SetState(FlightState.Grounded);
                     return;
                 }
 
                 if (_flightState == FlightState.Flying) {
-                    _flightState = FlightState.Landing;
+                    SetState(FlightState.Landing);
                 }
             }
 
@@ -72,7 +73,7 @@ namespace Drone.Core.Flight {
                 if (input.MoveDirection.Y <= 0) {
                     return;
                 }
-                _flightState = FlightState.Flying;
+                SetState(FlightState.Flying);
             }
             
             _heading += Math.Clamp(input.Yaw, -1f, 1f) * _profile.YawSpeed * deltaTime;
@@ -96,6 +97,12 @@ namespace Drone.Core.Flight {
             }
         }
 
+        private void SetState(FlightState state) {
+            if (_flightState == state) return;
+            _flightState = state;
+            StateChanged?.Invoke();
+        }
+
         private void TickLanding(float deltaTime) {
             _velocity = -Vector3.UnitY * _profile.LandingSpeed;
             _position += _velocity * deltaTime;
@@ -103,7 +110,7 @@ namespace Drone.Core.Flight {
             if (_position.Y <= 0) {
                 _velocity = Vector3.Zero;
                 _position.Y = 0f;
-                _flightState = FlightState.Grounded;
+                SetState(FlightState.Grounded);
             }
         }
     }

@@ -62,6 +62,37 @@ namespace Drone.Tests {
         }
 
         [Test]
+        public void StateChanged_ThroughAFullFlight_FiresOnEachTransition() {
+            var input = new FakeInputSource { Input = new FlightInput(Vector3.UnitY, 0f) };
+            var controller = new FlightController(new FakeClearance { IsCleared = true }, input, FlightProfile.Default);
+            var states = new System.Collections.Generic.List<FlightState>();
+            controller.StateChanged += () => states.Add(controller.Telemetry.FlightState);
+
+            controller.Arm();
+            controller.Tick(0.1f);
+            controller.Tick(0.1f);
+            controller.Disarm();
+            for (var i = 0; i < 100; i++) {
+                controller.Tick(0.1f);
+            }
+
+            CollectionAssert.AreEqual(new[] { FlightState.Armed, FlightState.Flying, FlightState.Landing, FlightState.Grounded }, states);
+        }
+
+        [Test]
+        public void StateChanged_ClearanceLostInFlight_ReportsLanding() {
+            var clearance = new FakeClearance { IsCleared = true };
+            var controller = CreateFlightController(clearance);
+            var states = new System.Collections.Generic.List<FlightState>();
+            controller.StateChanged += () => states.Add(controller.Telemetry.FlightState);
+
+            clearance.IsCleared = false;
+            controller.Tick(0.01f);
+
+            CollectionAssert.AreEqual(new[] { FlightState.Landing }, states);
+        }
+
+        [Test]
         public void NewController_IsGrounded() {
             var controller = new FlightController(new FakeClearance(), new FakeInputSource(), FlightProfile.Default);
 
