@@ -75,13 +75,19 @@ namespace Drone.Core.Authorization {
             }
 
             try {
-                _cts.Cancel();
-            }
-            catch (AggregateException) {
+                CancelIgnoringCallbackErrors(_cts);
             }
             finally {
                 _cts.Dispose();
                 _cts = null;
+            }
+        }
+
+        private static void CancelIgnoringCallbackErrors(CancellationTokenSource cts) {
+            try {
+                cts.Cancel();
+            }
+            catch (AggregateException) {
             }
         }
         
