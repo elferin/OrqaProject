@@ -8,6 +8,8 @@ namespace Drone.Tests {
     public class FlightInputRouterTests {
 
         private sealed class ThrowingInputSource : IFlightInputSource {
+            public string DisplayName => "Throwing";
+
             public FlightInput Sample() => throw new InvalidOperationException("Sensor lost");
         }
 

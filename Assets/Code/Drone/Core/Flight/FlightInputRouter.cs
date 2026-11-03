@@ -7,6 +7,7 @@ namespace Drone.Core.Flight {
         private IFlightInputSource _inputSource;
 
         public IFlightInputSource Source => _inputSource;
+        public string DisplayName => _inputSource?.DisplayName;
         public bool SourceFaulted { get; private set; }
         public event Action Changed;
 

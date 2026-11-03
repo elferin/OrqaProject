@@ -6,6 +6,8 @@ namespace Drone.Frontend {
 
     public sealed class KeyboardInputSource : IFlightInputSource {
 
+        public string DisplayName => "Keyboard";
+
         public FlightInput Sample() {
             var keyboard = Keyboard.current;
             if (keyboard == null) {

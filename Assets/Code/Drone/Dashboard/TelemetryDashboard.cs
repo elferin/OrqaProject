@@ -10,7 +10,6 @@ namespace Drone.Dashboard {
 
         private const float REFRESH_INTERVAL = 0.1f;
         private const int TENTHS = 10;
-        private const string SOURCE_SUFFIX = "InputSource";
         private const string FAULT_SUFFIX = " (fault)";
 
         [SerializeField] private TMP_Text authText;
@@ -87,7 +86,7 @@ namespace Drone.Dashboard {
                 return "Input: None";
             }
 
-            return "Input: " + source.GetType().Name.Replace(SOURCE_SUFFIX, string.Empty) + (faulted ? FAULT_SUFFIX : string.Empty);
+            return "Input: " + source.DisplayName + (faulted ? FAULT_SUFFIX : string.Empty);
         }
 
         private static string AuthLabel(AuthState state) {

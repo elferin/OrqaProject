@@ -6,6 +6,8 @@ namespace Drone.Providers {
 
     public sealed class AutopilotInputSource : IFlightInputSource {
 
+        public string DisplayName => "Autopilot";
+
         private const float SLOWDOWN_DISTANCE = 2f;
 
         private readonly Func<float> _getAltitude;

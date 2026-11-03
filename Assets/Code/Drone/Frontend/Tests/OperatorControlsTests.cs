@@ -32,6 +32,8 @@ namespace Drone.Frontend.Tests {
         }
 
         private sealed class MarkedSource : IFlightInputSource {
+            public string DisplayName => "Marked";
+
             private readonly float _yaw;
 
             public MarkedSource(float yaw) {

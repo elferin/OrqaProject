@@ -47,14 +47,26 @@ namespace Drone.Dashboard.Tests {
         private string Line(string lineName) => Text(lineName).text;
 
         private sealed class AlphaInputSource : IFlightInputSource {
+            public string DisplayName => "Alpha";
+
             public FlightInput Sample() => default;
         }
 
         private sealed class BetaInputSource : IFlightInputSource {
+            public string DisplayName => "Beta";
+
+            public FlightInput Sample() => default;
+        }
+
+        private sealed class RenamedClassSource : IFlightInputSource {
+            public string DisplayName => "Pilot";
+
             public FlightInput Sample() => default;
         }
 
         private sealed class ThrowingInputSource : IFlightInputSource {
+            public string DisplayName => "Throwing";
+
             public FlightInput Sample() => throw new System.InvalidOperationException("Sensor lost");
         }
 
@@ -95,6 +107,17 @@ namespace Drone.Dashboard.Tests {
             session.SelectNextInputSource();
             _dashboard.FrameTick(WITHIN_INTERVAL);
             Assert.AreEqual("Input: Beta", Line("Input"));
+        }
+
+        [Test]
+        public void FrameTick_ShowsTheDisplayNameNotTheClassName() {
+            using var session = CreateSession();
+            session.AddInputSource(new RenamedClassSource());
+            _dashboard.Attach(session);
+
+            _dashboard.FrameTick(WITHIN_INTERVAL);
+
+            Assert.AreEqual("Input: Pilot", Line("Input"));
         }
 
         [Test]
