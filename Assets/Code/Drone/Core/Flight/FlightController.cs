@@ -78,17 +78,25 @@ namespace Drone.Core.Flight {
             
             _heading += Math.Clamp(input.Yaw, -1f, 1f) * _profile.YawSpeed * deltaTime;
 
-            var moveDirection = input.MoveDirection.Length() > 1
-                ? Vector3.Normalize(input.MoveDirection)
-                : input.MoveDirection;
+            Accelerate(input.MoveDirection, deltaTime);
+            Move(deltaTime);
+        }
+
+        private void Accelerate(Vector3 moveDirection, float deltaTime) {
+            if (moveDirection.Length() > 1) {
+                moveDirection = Vector3.Normalize(moveDirection);
+            }
             var target = moveDirection * _profile.MaxSpeed;
             var change = target - _velocity;
             if (change.Length() > _profile.Acceleration * deltaTime) {
                 change = Vector3.Normalize(change) * _profile.Acceleration * deltaTime;
             }
             _velocity += change;
+        }
+
+        private void Move(float deltaTime) {
             _position += _velocity * deltaTime;
-            
+
             if (_position.Y < 0) {
                 _position.Y = 0f;
                 if (_velocity.Y < 0) {
