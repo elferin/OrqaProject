@@ -52,6 +52,44 @@ namespace Drone.Core.Session {
             }
         }
 
+        public void RemoveInputSource(IFlightInputSource flightInputSource) {
+
+            var index = _inputSources.IndexOf(flightInputSource);
+            if (index < 0) {
+                return;
+            }
+
+            _inputSources.RemoveAt(index);
+
+            if (_router.Source != flightInputSource) {
+                if (index < _activeSourceIndex) {
+                    _activeSourceIndex--;
+                }
+                return;
+            }
+
+            if (_inputSources.Count == 0) {
+                _activeSourceIndex = 0;
+                _router.SetSource(null);
+                return;
+            }
+
+            _activeSourceIndex = index % _inputSources.Count;
+            _router.SetSource(_inputSources[_activeSourceIndex]);
+        }
+
+        public bool SelectInputSource(IFlightInputSource flightInputSource) {
+
+            var index = _inputSources.IndexOf(flightInputSource);
+            if (index < 0) {
+                return false;
+            }
+
+            _activeSourceIndex = index;
+            _router.SetSource(flightInputSource);
+            return true;
+        }
+
         public void SelectNextInputSource() {
 
             if (_inputSources.Count == 0) {

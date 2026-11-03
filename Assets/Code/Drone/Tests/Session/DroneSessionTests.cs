@@ -176,6 +176,104 @@ namespace Drone.Tests {
         }
 
         [Test]
+        public void RemoveInputSource_Active_SelectsTheNextOne() {
+            using var session = CreateSession();
+            var first = new FakeInputSource();
+            var second = new FakeInputSource();
+            var third = new FakeInputSource();
+            session.AddInputSource(first);
+            session.AddInputSource(second);
+            session.AddInputSource(third);
+            session.SelectNextInputSource();
+
+            session.RemoveInputSource(second);
+
+            Assert.AreSame(third, session.ActiveSource);
+        }
+
+        [Test]
+        public void RemoveInputSource_ActiveAndLast_WrapsToTheFirst() {
+            using var session = CreateSession();
+            var first = new FakeInputSource();
+            var second = new FakeInputSource();
+            session.AddInputSource(first);
+            session.AddInputSource(second);
+            session.SelectNextInputSource();
+
+            session.RemoveInputSource(second);
+
+            Assert.AreSame(first, session.ActiveSource);
+        }
+
+        [Test]
+        public void RemoveInputSource_Inactive_KeepsTheActiveOneAndTheCycle() {
+            using var session = CreateSession();
+            var first = new FakeInputSource();
+            var second = new FakeInputSource();
+            var third = new FakeInputSource();
+            session.AddInputSource(first);
+            session.AddInputSource(second);
+            session.AddInputSource(third);
+            session.SelectNextInputSource();
+            session.SelectNextInputSource();
+
+            session.RemoveInputSource(first);
+
+            Assert.AreSame(third, session.ActiveSource);
+            session.SelectNextInputSource();
+            Assert.AreSame(second, session.ActiveSource);
+        }
+
+        [Test]
+        public void RemoveInputSource_Only_LeavesNoSource() {
+            using var session = CreateSession();
+            var source = new FakeInputSource();
+            session.AddInputSource(source);
+
+            session.RemoveInputSource(source);
+
+            Assert.IsNull(session.ActiveSource);
+        }
+
+        [Test]
+        public void RemoveInputSource_Unknown_DoesNothing() {
+            using var session = CreateSession();
+            var source = new FakeInputSource();
+            session.AddInputSource(source);
+
+            session.RemoveInputSource(new FakeInputSource());
+
+            Assert.AreSame(source, session.ActiveSource);
+        }
+
+        [Test]
+        public void SelectInputSource_Known_MakesItActiveAndContinuesTheCycleFromIt() {
+            using var session = CreateSession();
+            var first = new FakeInputSource();
+            var second = new FakeInputSource();
+            var third = new FakeInputSource();
+            session.AddInputSource(first);
+            session.AddInputSource(second);
+            session.AddInputSource(third);
+
+            Assert.IsTrue(session.SelectInputSource(third));
+            Assert.AreSame(third, session.ActiveSource);
+
+            session.SelectNextInputSource();
+            Assert.AreSame(first, session.ActiveSource);
+        }
+
+        [Test]
+        public void SelectInputSource_Unknown_ReturnsFalseAndKeepsTheActiveOne() {
+            using var session = CreateSession();
+            var source = new FakeInputSource();
+            session.AddInputSource(source);
+
+            Assert.IsFalse(session.SelectInputSource(new FakeInputSource()));
+            Assert.AreSame(source, session.ActiveSource);
+        }
+
+        [Test]
         public void Dispose_PendingAttempt_IsCancelled() {
             var session = CreateSession();
             var provider = new FakeAuthorizationProvider();

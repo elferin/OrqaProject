@@ -29,8 +29,9 @@ namespace Drone.Frontend.Tests {
 
         [UnityTearDown]
         public IEnumerator TearDown() {
-            _frontend.Detach();
-            Object.Destroy(_frontend.gameObject);
+            if (_frontend != null) {
+                Object.Destroy(_frontend.gameObject);
+            }
             _session.Dispose();
             yield return null;
         }
@@ -51,6 +52,30 @@ namespace Drone.Frontend.Tests {
 
             yield return null;
 
+            Assert.IsNull(GameObject.Find("Drone"));
+        }
+
+        [Test]
+        public void Detach_RemovesTheKeyboardSource() {
+            _frontend.Detach();
+
+            Assert.IsNull(_session.ActiveSource);
+        }
+
+        [Test]
+        public void Detach_Twice_DoesNotThrow() {
+            _frontend.Detach();
+
+            Assert.DoesNotThrow(() => _frontend.Detach());
+        }
+
+        [UnityTest]
+        public IEnumerator Destroy_DetachesItself() {
+            Object.Destroy(_frontend.gameObject);
+
+            yield return null;
+
+            Assert.IsNull(_session.ActiveSource);
             Assert.IsNull(GameObject.Find("Drone"));
         }
     }
