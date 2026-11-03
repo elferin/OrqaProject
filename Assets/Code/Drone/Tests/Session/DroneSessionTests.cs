@@ -119,6 +119,63 @@ namespace Drone.Tests {
         }
 
         [Test]
+        public void AuthorizeAndArm_InstantSuccess_ArmsOnTheNextTick() {
+            using var session = CreateSession();
+            var provider = new FakeAuthorizationProvider();
+            provider.Complete(AuthResult.Success());
+
+            session.AuthorizeAndArm(provider);
+            session.Tick(0.02f);
+
+            Assert.AreEqual(FlightState.Armed, session.Controller.Telemetry.FlightState);
+        }
+
+        [Test]
+        public void AuthorizeAndArm_SlowProvider_ArmsOnlyOnceCleared() {
+            using var session = CreateSession();
+            var provider = new FakeAuthorizationProvider();
+            session.AuthorizeAndArm(provider);
+
+            session.Tick(0.02f);
+            Assert.AreEqual(FlightState.Grounded, session.Controller.Telemetry.FlightState);
+
+            provider.Complete(AuthResult.Success());
+            session.Tick(0.02f);
+            Assert.AreEqual(FlightState.Armed, session.Controller.Telemetry.FlightState);
+        }
+
+        [Test]
+        public void AuthorizeAndArm_Denied_DoesNotArmOnALaterAuthorization() {
+            using var session = CreateSession();
+            var denied = new FakeAuthorizationProvider();
+            denied.Complete(AuthResult.Denied("No licence"));
+            session.AuthorizeAndArm(denied);
+            session.Tick(0.02f);
+
+            var operatorProvider = new FakeAuthorizationProvider();
+            operatorProvider.Complete(AuthResult.Success());
+            session.Gate.Request(operatorProvider);
+            session.Tick(0.02f);
+
+            Assert.AreEqual(FlightState.Grounded, session.Controller.Telemetry.FlightState);
+        }
+
+        [Test]
+        public void AuthorizeAndArm_RevokedWhilePending_DoesNotArmOnALaterAuthorization() {
+            using var session = CreateSession();
+            session.AuthorizeAndArm(new FakeAuthorizationProvider());
+            session.Gate.Revoke();
+            session.Tick(0.02f);
+
+            var operatorProvider = new FakeAuthorizationProvider();
+            operatorProvider.Complete(AuthResult.Success());
+            session.Gate.Request(operatorProvider);
+            session.Tick(0.02f);
+
+            Assert.AreEqual(FlightState.Grounded, session.Controller.Telemetry.FlightState);
+        }
+
+        [Test]
         public void Dispose_PendingAttempt_IsCancelled() {
             var session = CreateSession();
             var provider = new FakeAuthorizationProvider();

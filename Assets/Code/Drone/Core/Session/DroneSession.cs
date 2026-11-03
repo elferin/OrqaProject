@@ -12,6 +12,7 @@ namespace Drone.Core.Session {
         private readonly FlightInputRouter _router;
         private readonly List<IFlightInputSource> _inputSources = new();
         private int _activeSourceIndex;
+        private bool _armWhenCleared;
 
         public AuthState AuthState => Gate.State;
         public string FailureReason => Gate.LastFailureReason;
@@ -61,10 +62,34 @@ namespace Drone.Core.Session {
             _router.SetSource(_inputSources[_activeSourceIndex]);
         }
 
+        public void AuthorizeAndArm(IAuthorizationProvider provider) {
+
+            _armWhenCleared = true;
+            Gate.Request(provider);
+        }
+
         public void Tick(float deltaTime) {
-            
+
             Gate.Pump();
+            ArmIfCleared();
             Controller.Tick(deltaTime);
+        }
+
+        private void ArmIfCleared() {
+
+            if (!_armWhenCleared) {
+                return;
+            }
+
+            if (Gate.IsCleared) {
+                _armWhenCleared = false;
+                Controller.Arm();
+                return;
+            }
+
+            if (Gate.State != AuthState.Authorizing) {
+                _armWhenCleared = false;
+            }
         }
 
         public void Dispose() {

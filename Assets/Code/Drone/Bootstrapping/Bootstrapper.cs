@@ -20,8 +20,6 @@ namespace Drone.App {
         private readonly List<IDroneFrontend> _droneFrontends = new();
         private DroneSession _session;
 
-        private bool _autoArmPending;
-
         private void Awake() {
 
             var providers = CreateProviders();
@@ -42,8 +40,7 @@ namespace Drone.App {
             }
 
             if (autoStart && providers.Count > 0) {
-                _session.Gate.Request(providers[0]);
-                _autoArmPending = true;
+                _session.AuthorizeAndArm(providers[0]);
             }
         }
 
@@ -67,11 +64,6 @@ namespace Drone.App {
         private void FixedUpdate() {
 
             _session.Tick(Time.fixedDeltaTime);
-
-            if (_autoArmPending && _session.Gate.IsCleared) {
-                _autoArmPending = false;
-                _session.Controller.Arm();
-            }
 
             for (var i = 0; i < _droneFrontends.Count; i++) {
                 var frontend = _droneFrontends[i];
