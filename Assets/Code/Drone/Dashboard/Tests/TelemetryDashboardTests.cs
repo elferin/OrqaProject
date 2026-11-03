@@ -45,6 +45,16 @@ namespace Drone.Dashboard.Tests {
             public FlightInput Sample() => default;
         }
 
+        private sealed class ThrowingInputSource : IFlightInputSource {
+            public FlightInput Sample() => throw new System.InvalidOperationException("Sensor lost");
+        }
+
+        private sealed class InstantProvider : IAuthorizationProvider {
+            public System.Threading.Tasks.Task<AuthResult> AuthorizeAsync(System.Threading.CancellationToken cancellationToken) {
+                return System.Threading.Tasks.Task.FromResult(AuthResult.Success());
+            }
+        }
+
         private sealed class BetaInputSource : IFlightInputSource {
             public FlightInput Sample() => default;
         }
@@ -62,6 +72,20 @@ namespace Drone.Dashboard.Tests {
             session.SelectNextInputSource();
             _dashboard.FrameTick(WITHIN_INTERVAL);
             Assert.AreEqual("Input: Beta", Line("Input"));
+        }
+
+        [Test]
+        public void FrameTick_SourceFaults_ShowsTheFault() {
+            using var session = new DroneSession(new IAuthorizationProvider[0]);
+            session.AddInputSource(new ThrowingInputSource());
+            session.Gate.Request(new InstantProvider());
+            session.Controller.Arm();
+            _dashboard.Attach(session);
+
+            session.Tick(WITHIN_INTERVAL);
+            _dashboard.FrameTick(WITHIN_INTERVAL);
+
+            Assert.AreEqual("Input: Throwing (fault)", Line("Input"));
         }
 
         [Test]

@@ -8,5 +8,6 @@ namespace Drone.Core.Session {
         string FailureReason { get; }
         TelemetrySnapshot Telemetry { get; }
         IFlightInputSource ActiveSource { get; }
+        bool InputFaulted { get; }
     }
 }

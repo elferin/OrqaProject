@@ -11,6 +11,7 @@ namespace Drone.Dashboard {
         private const float REFRESH_INTERVAL = 0.1f;
         private const int TENTHS = 10;
         private const string SOURCE_SUFFIX = "InputSource";
+        private const string FAULT_SUFFIX = " (fault)";
 
         [SerializeField] private TMP_Text authText;
         [SerializeField] private TMP_Text reasonText;
@@ -26,6 +27,7 @@ namespace Drone.Dashboard {
         private string _shownReason;
         private FlightState? _shownFlightState;
         private IFlightInputSource _shownSource;
+        private bool _shownFault;
         private int? _shownAltitudeTenths;
         private int? _shownSpeedTenths;
         
@@ -36,11 +38,13 @@ namespace Drone.Dashboard {
         
         public void FrameTick(float deltaTime) {
             var source = _readout.ActiveSource;
-            if (_shownSource != source) {
+            var fault = _readout.InputFaulted;
+            if (_shownSource != source || _shownFault != fault) {
+                _shownFault = fault;
                 _shownSource = source;
                 inputText.text = source == null
                     ? "Input: None"
-                    : "Input: " + source.GetType().Name.Replace(SOURCE_SUFFIX, string.Empty);
+                    : "Input: " + source.GetType().Name.Replace(SOURCE_SUFFIX, string.Empty) + (fault ? FAULT_SUFFIX : string.Empty);
             }
 
             Tick(deltaTime, _readout.AuthState, _readout.FailureReason, _readout.Telemetry);

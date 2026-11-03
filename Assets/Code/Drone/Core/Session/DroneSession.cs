@@ -17,6 +17,7 @@ namespace Drone.Core.Session {
         public string FailureReason => Gate.LastFailureReason;
         public TelemetrySnapshot Telemetry => Controller.Telemetry;
         public IFlightInputSource ActiveSource => _router.Source;
+        public bool InputFaulted => _router.SourceFaulted;
 
         public DroneSession(IReadOnlyList<IAuthorizationProvider> providers) {
 
