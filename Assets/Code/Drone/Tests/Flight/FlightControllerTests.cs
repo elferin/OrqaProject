@@ -8,22 +8,69 @@ namespace Drone.Tests {
         
         private static FlightController CreateFlightController(FakeClearance clearance) {
             var input = new FakeInputSource { Input = new FlightInput(Vector3.UnitY, 0f) };
-            var controller = new FlightController(clearance, input);
+            var controller = new FlightController(clearance, input, FlightProfile.Default);
             controller.Arm();
             controller.Tick(0.5f);
             return controller;
         }
         
+        [TestCase(0f, 5f, 2f, 2f)]
+        [TestCase(10f, 0f, 2f, 2f)]
+        [TestCase(10f, 5f, 0f, 2f)]
+        [TestCase(10f, 5f, 2f, 0f)]
+        [TestCase(10f, 5f, -2f, 2f)]
+        [TestCase(10f, float.NaN, 2f, 2f)]
+        public void Constructor_InvalidProfile_Throws(float acceleration, float maxSpeed, float landingSpeed, float yawSpeed) {
+            var profile = new FlightProfile {
+                Acceleration = acceleration,
+                MaxSpeed = maxSpeed,
+                LandingSpeed = landingSpeed,
+                YawSpeed = yawSpeed
+            };
+
+            Assert.Throws<System.ArgumentException>(() => new FlightController(new FakeClearance(), new FakeInputSource(), profile));
+        }
+
+        [Test]
+        public void Tick_CustomProfile_UsesItsMaxSpeed() {
+            var profile = FlightProfile.Default;
+            profile.MaxSpeed = 1f;
+            var input = new FakeInputSource { Input = new FlightInput(Vector3.UnitY, 0f) };
+            var controller = new FlightController(new FakeClearance { IsCleared = true }, input, profile);
+            controller.Arm();
+
+            for (var i = 0; i < 100; i++) {
+                controller.Tick(0.1f);
+            }
+
+            Assert.AreEqual(1f, controller.Telemetry.Speed, 0.001f);
+        }
+
+        [Test]
+        public void Tick_CustomProfile_UsesItsLandingSpeed() {
+            var profile = FlightProfile.Default;
+            profile.LandingSpeed = 0.5f;
+            var input = new FakeInputSource { Input = new FlightInput(Vector3.UnitY, 0f) };
+            var controller = new FlightController(new FakeClearance { IsCleared = true }, input, profile);
+            controller.Arm();
+            controller.Tick(1f);
+
+            controller.Disarm();
+            controller.Tick(0.1f);
+
+            Assert.AreEqual(0.5f, controller.Telemetry.Speed, 0.001f);
+        }
+
         [Test]
         public void NewController_IsGrounded() {
-            var controller = new FlightController(new FakeClearance(), new FakeInputSource());
+            var controller = new FlightController(new FakeClearance(), new FakeInputSource(), FlightProfile.Default);
 
             Assert.AreEqual(FlightState.Grounded, controller.Telemetry.FlightState);
         }
 
         [Test]
         public void Arm_WithoutClearance_StaysGrounded() {
-            var controller = new FlightController(new FakeClearance { IsCleared = false }, new FakeInputSource());
+            var controller = new FlightController(new FakeClearance { IsCleared = false }, new FakeInputSource(), FlightProfile.Default);
 
             controller.Arm();
 
@@ -32,7 +79,7 @@ namespace Drone.Tests {
 
         [Test]
         public void Arm_WithClearance_BecomesArmed() {
-            var controller = new FlightController(new FakeClearance { IsCleared = true }, new FakeInputSource());
+            var controller = new FlightController(new FakeClearance { IsCleared = true }, new FakeInputSource(), FlightProfile.Default);
 
             controller.Arm();
 
@@ -42,7 +89,7 @@ namespace Drone.Tests {
         [Test]
         public void Tick_WhenGrounded_IgnoresInput() {
             var input = new FakeInputSource { Input = new FlightInput(Vector3.UnitY, 0f) };
-            var controller = new FlightController(new FakeClearance { IsCleared = true }, input);
+            var controller = new FlightController(new FakeClearance { IsCleared = true }, input, FlightProfile.Default);
 
             controller.Tick(0.02f);
 
@@ -53,7 +100,7 @@ namespace Drone.Tests {
         [Test]
         public void Tick_WhenArmedWithUpwardInput_TakesOff() {
             var input = new FakeInputSource { Input = new FlightInput(Vector3.UnitY, 0f) };
-            var controller = new FlightController(new FakeClearance { IsCleared = true }, input);
+            var controller = new FlightController(new FakeClearance { IsCleared = true }, input, FlightProfile.Default);
             controller.Arm();
 
             controller.Tick(0.02f);
@@ -65,7 +112,7 @@ namespace Drone.Tests {
 
         [Test]
         public void Tick_WhenArmedWithNoInput_StaysArmed() {
-            var controller = new FlightController(new FakeClearance { IsCleared = true }, new FakeInputSource());
+            var controller = new FlightController(new FakeClearance { IsCleared = true }, new FakeInputSource(), FlightProfile.Default);
             controller.Arm();
 
             controller.Tick(0.02f);
@@ -77,7 +124,7 @@ namespace Drone.Tests {
         [Test]
         public void Tick_WhileFlying_AccumulatesAltitude() {
             var input = new FakeInputSource { Input = new FlightInput(Vector3.UnitY, 0f) };
-            var controller = new FlightController(new FakeClearance { IsCleared = true }, input);
+            var controller = new FlightController(new FakeClearance { IsCleared = true }, input, FlightProfile.Default);
             controller.Arm();
 
             controller.Tick(0.1f);
@@ -143,7 +190,7 @@ namespace Drone.Tests {
         [Test]
         public void Tick_WhenClearanceLostWhileArmed_BecomesGrounded() {
             var clearance = new FakeClearance { IsCleared = true };
-            var controller = new FlightController(clearance, new FakeInputSource());
+            var controller = new FlightController(clearance, new FakeInputSource(), FlightProfile.Default);
             controller.Arm();
 
             clearance.IsCleared = false;
@@ -155,7 +202,7 @@ namespace Drone.Tests {
         [Test]
         public void Tick_WhenFlyingDownIntoGround_StopsAtZero() {
             var input = new FakeInputSource { Input = new FlightInput(Vector3.UnitY, 0f) };
-            var controller = new FlightController(new FakeClearance { IsCleared = true }, input);
+            var controller = new FlightController(new FakeClearance { IsCleared = true }, input, FlightProfile.Default);
             controller.Arm();
             controller.Tick(0.5f);
 
@@ -171,7 +218,7 @@ namespace Drone.Tests {
         [Test]
         public void Tick_WithDiagonalInput_NeverExceedsMaxSpeed() {
             var input = new FakeInputSource { Input = new FlightInput(Vector3.One, 0f) };
-            var controller = new FlightController(new FakeClearance { IsCleared = true }, input);
+            var controller = new FlightController(new FakeClearance { IsCleared = true }, input, FlightProfile.Default);
             controller.Arm();
 
             for (var i = 0; i < 100; i++) {
@@ -184,7 +231,7 @@ namespace Drone.Tests {
         [Test]
         public void Tick_WhenTakingOff_AcceleratesGradually() {
             var input = new FakeInputSource { Input = new FlightInput(Vector3.UnitY, 0f) };
-            var controller = new FlightController(new FakeClearance { IsCleared = true }, input);
+            var controller = new FlightController(new FakeClearance { IsCleared = true }, input, FlightProfile.Default);
             controller.Arm();
 
             controller.Tick(0.02f);
@@ -195,7 +242,7 @@ namespace Drone.Tests {
         [Test]
         public void Tick_WithFullInput_ReachesMaxSpeed() {
             var input = new FakeInputSource { Input = new FlightInput(Vector3.UnitY, 0f) };
-            var controller = new FlightController(new FakeClearance { IsCleared = true }, input);
+            var controller = new FlightController(new FakeClearance { IsCleared = true }, input, FlightProfile.Default);
             controller.Arm();
 
             for (var i = 0; i < 100; i++) {
@@ -207,7 +254,7 @@ namespace Drone.Tests {
         
         [Test]
         public void Disarm_WhenArmed_BecomesGrounded() {
-            var controller = new FlightController(new FakeClearance { IsCleared = true }, new FakeInputSource());
+            var controller = new FlightController(new FakeClearance { IsCleared = true }, new FakeInputSource(), FlightProfile.Default);
             controller.Arm();
 
             controller.Disarm();
@@ -227,7 +274,7 @@ namespace Drone.Tests {
         [Test]
         public void Tick_WithYawInput_TurnsDrone() {
             var input = new FakeInputSource { Input = new FlightInput(Vector3.UnitY, 1f) };
-            var controller = new FlightController(new FakeClearance { IsCleared = true }, input);
+            var controller = new FlightController(new FakeClearance { IsCleared = true }, input, FlightProfile.Default);
             controller.Arm();
 
             controller.Tick(0.5f);
@@ -238,7 +285,7 @@ namespace Drone.Tests {
         [Test]
         public void Tick_WithOversizedYawInput_LimitsTurnRate() {
             var input = new FakeInputSource { Input = new FlightInput(Vector3.UnitY, 10f) };
-            var controller = new FlightController(new FakeClearance { IsCleared = true }, input);
+            var controller = new FlightController(new FakeClearance { IsCleared = true }, input, FlightProfile.Default);
             controller.Arm();
 
             controller.Tick(0.5f);
@@ -249,7 +296,7 @@ namespace Drone.Tests {
         [Test]
         public void Tick_WhileFlying_ReportsPosition() {
             var input = new FakeInputSource { Input = new FlightInput(Vector3.UnitY, 0f) };
-            var controller = new FlightController(new FakeClearance { IsCleared = true }, input);
+            var controller = new FlightController(new FakeClearance { IsCleared = true }, input, FlightProfile.Default);
             controller.Arm();
 
             controller.Tick(0.5f);

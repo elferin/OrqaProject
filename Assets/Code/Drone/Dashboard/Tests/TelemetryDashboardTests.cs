@@ -21,6 +21,13 @@ namespace Drone.Dashboard.Tests {
 
         private TelemetryDashboard _dashboard;
 
+        private static DroneSession CreateSession(params IAuthorizationProvider[] providers) {
+            var gate = new AuthorizationGate();
+            var router = new FlightInputRouter();
+            var controller = new FlightController(gate, router, FlightProfile.Default);
+            return new DroneSession(gate, router, controller, providers);
+        }
+
         [SetUp]
         public void SetUp() {
             var prefab = Resources.Load<TelemetryDashboard>(PREFAB_NAME);
@@ -61,7 +68,7 @@ namespace Drone.Dashboard.Tests {
 
         [Test]
         public void FrameTick_SourceChanges_ShowsTheActiveSource() {
-            using var session = new DroneSession(new IAuthorizationProvider[0]);
+            using var session = CreateSession();
             session.AddInputSource(new AlphaInputSource());
             session.AddInputSource(new BetaInputSource());
             _dashboard.Attach(session);
@@ -76,7 +83,7 @@ namespace Drone.Dashboard.Tests {
 
         [Test]
         public void FrameTick_SourceFaults_ShowsTheFault() {
-            using var session = new DroneSession(new IAuthorizationProvider[0]);
+            using var session = CreateSession();
             session.AddInputSource(new ThrowingInputSource());
             session.Gate.Request(new InstantProvider());
             session.Controller.Arm();

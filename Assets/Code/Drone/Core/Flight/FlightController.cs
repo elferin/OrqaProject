@@ -6,13 +6,9 @@ namespace Drone.Core.Flight {
     
     public sealed class FlightController {
         
-        private const float ACCELERATION = 10f;
-        private const float MAX_SPEED = 5f;
-        private const float LANDING_SPEED = 2f;
-        private const float YAW_SPEED = 2f;
-        
         private readonly IFlightClearance _flightClearance;
         private readonly IFlightInputSource _flightInputSource;
+        private readonly FlightProfile _profile;
 
         private FlightState _flightState;
         private Vector3 _position;
@@ -20,9 +16,14 @@ namespace Drone.Core.Flight {
         private float _heading;
         public TelemetrySnapshot Telemetry => new (_flightState, _position.Y, _velocity.Length(), _position, _heading);
 
-        public FlightController(IFlightClearance flightClearance, IFlightInputSource flightInputSource) {
+        public FlightController(IFlightClearance flightClearance, IFlightInputSource flightInputSource, FlightProfile profile) {
+            if (!profile.IsValid) {
+                throw new ArgumentException("Flight profile values must be positive and finite", nameof(profile));
+            }
+
             _flightClearance = flightClearance;
             _flightInputSource = flightInputSource;
+            _profile = profile;
         }
 
         public void Arm() {
@@ -74,15 +75,15 @@ namespace Drone.Core.Flight {
                 _flightState = FlightState.Flying;
             }
             
-            _heading += Math.Clamp(input.Yaw, -1f, 1f) * YAW_SPEED * deltaTime;
+            _heading += Math.Clamp(input.Yaw, -1f, 1f) * _profile.YawSpeed * deltaTime;
 
             var moveDirection = input.MoveDirection.Length() > 1
                 ? Vector3.Normalize(input.MoveDirection)
                 : input.MoveDirection;
-            var target = moveDirection * MAX_SPEED;
+            var target = moveDirection * _profile.MaxSpeed;
             var change = target - _velocity;
-            if (change.Length() > ACCELERATION * deltaTime) {
-                change = Vector3.Normalize(change) * ACCELERATION * deltaTime;
+            if (change.Length() > _profile.Acceleration * deltaTime) {
+                change = Vector3.Normalize(change) * _profile.Acceleration * deltaTime;
             }
             _velocity += change;
             _position += _velocity * deltaTime;
@@ -96,7 +97,7 @@ namespace Drone.Core.Flight {
         }
 
         private void TickLanding(float deltaTime) {
-            _velocity = -Vector3.UnitY * LANDING_SPEED;
+            _velocity = -Vector3.UnitY * _profile.LandingSpeed;
             _position += _velocity * deltaTime;
 
             if (_position.Y <= 0) {

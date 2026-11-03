@@ -44,6 +44,13 @@ namespace Drone.Frontend.Tests {
         private DroneSession _session;
         private Keyboard _keyboard;
 
+        private static DroneSession CreateSession(params IAuthorizationProvider[] providers) {
+            var gate = new AuthorizationGate();
+            var router = new FlightInputRouter();
+            var controller = new FlightController(gate, router, FlightProfile.Default);
+            return new DroneSession(gate, router, controller, providers);
+        }
+
         [SetUp]
         public override void Setup() {
             base.Setup();
@@ -57,7 +64,7 @@ namespace Drone.Frontend.Tests {
         }
 
         private OperatorControls CreateControls(params IAuthorizationProvider[] providers) {
-            _session = new DroneSession(providers);
+            _session = CreateSession(providers);
             _session.AddInputSource(new MarkedSource(0f));
             return new OperatorControls(_session);
         }
@@ -168,7 +175,7 @@ namespace Drone.Frontend.Tests {
 
         [Test]
         public void Tick_SwapKey_CyclesSourcesAndWraps() {
-            _session = new DroneSession(new IAuthorizationProvider[0]);
+            _session = CreateSession();
             _session.AddInputSource(new MarkedSource(0.5f));
             _session.AddInputSource(new MarkedSource(0.9f));
             var controls = new OperatorControls(_session);
@@ -182,7 +189,7 @@ namespace Drone.Frontend.Tests {
 
         [Test]
         public void Tick_SwapKeyWithSourceAddedLater_IncludesIt() {
-            _session = new DroneSession(new IAuthorizationProvider[0]);
+            _session = CreateSession();
             _session.AddInputSource(new MarkedSource(0.5f));
             var controls = new OperatorControls(_session);
             _session.AddInputSource(new MarkedSource(0.9f));

@@ -13,7 +13,7 @@ namespace Drone.Tests {
 
         private static FlightController FlyingController(FlightInputRouter router) {
             router.SetSource(new FakeInputSource { Input = new FlightInput(Vector3.UnitY, 0f) });
-            var controller = new FlightController(new FakeClearance { IsCleared = true }, router);
+            var controller = new FlightController(new FakeClearance { IsCleared = true }, router, FlightProfile.Default);
             controller.Arm();
             controller.Tick(0.5f);
             return controller;
@@ -77,7 +77,7 @@ namespace Drone.Tests {
         public void Controller_ArmedWithNaNClimb_DoesNotLiftOff() {
             var router = new FlightInputRouter();
             router.SetSource(new FakeInputSource { Input = new FlightInput(new Vector3(0f, float.NaN, 0f), 0f) });
-            var controller = new FlightController(new FakeClearance { IsCleared = true }, router);
+            var controller = new FlightController(new FakeClearance { IsCleared = true }, router, FlightProfile.Default);
             controller.Arm();
 
             controller.Tick(0.02f);
@@ -165,7 +165,7 @@ namespace Drone.Tests {
         public void Controller_WhenSourceSwappedMidFlight_FollowsNewSource() {
             var router = new FlightInputRouter();
             router.SetSource(new FakeInputSource { Input = new FlightInput(Vector3.UnitY, 0f) });
-            var controller = new FlightController(new FakeClearance { IsCleared = true }, router);
+            var controller = new FlightController(new FakeClearance { IsCleared = true }, router, FlightProfile.Default);
             controller.Arm();
             controller.Tick(0.5f);
 

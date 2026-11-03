@@ -46,6 +46,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Drone.App::Code.Drone.Bootstrapping.Bootstrapper
   autoStart: 0
   autopilotAltitude: 3
+  flightProfile: {fileID: 11400000, guid: 93a44f5e31fd7f74eb5f88ec266bdc77, type: 2}
   authorizationProviderFactories:
   - {fileID: 11400000, guid: d459a4a6a2a3e4846b644afba6f6f350, type: 2}
   - {fileID: 11400000, guid: f87b063614e90cc47a877aff5816e20a, type: 2}

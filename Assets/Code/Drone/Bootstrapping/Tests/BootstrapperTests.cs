@@ -16,6 +16,8 @@ namespace Drone.App.Tests {
 
         private const string EMPTY_SLOT_ERROR = "Empty authorization provider factory slot, digit keys will shift";
         private const string NO_PROVIDERS_ERROR = "No authorization providers configured, the drone can't be authorized";
+        private const string INVALID_PROFILE_ERROR = "Invalid flight profile, using the default";
+        private const string NO_PROFILE_ERROR = "No flight profile assigned, using the default";
         private const int FIXED_TICKS_TO_LIFT_OFF = 3;
 
         private sealed class ControlledProvider : IAuthorizationProvider {
@@ -73,10 +75,21 @@ namespace Drone.App.Tests {
             _created.Add(_root);
         }
 
+        private FlightProfileAsset CreateProfile() {
+            var profile = ScriptableObject.CreateInstance<FlightProfileAsset>();
+            _created.Add(profile);
+            return profile;
+        }
+
         private void Start(bool autoStart, params AuthorizationProviderFactory[] factories) {
+            Start(autoStart, CreateProfile(), factories);
+        }
+
+        private void Start(bool autoStart, FlightProfileAsset profile, params AuthorizationProviderFactory[] factories) {
             var bootstrapper = _root.AddComponent<Bootstrapper>();
             var serialized = new SerializedObject(bootstrapper);
             serialized.FindProperty("autoStart").boolValue = autoStart;
+            serialized.FindProperty("flightProfile").objectReferenceValue = profile;
             var list = serialized.FindProperty("authorizationProviderFactories");
             list.arraySize = factories.Length;
             for (var i = 0; i < factories.Length; i++) {
@@ -247,6 +260,32 @@ namespace Drone.App.Tests {
             var frontend = StartWithFrontend(false, null, FactoryFor(new InstantProvider(AuthResult.Success())));
 
             Assert.AreEqual(1, frontend.Session.Providers.Count);
+        }
+
+        [Test]
+        public void Awake_InvalidFlightProfile_LogsAnErrorAndStillBuildsTheSession() {
+            LogAssert.Expect(LogType.Error, INVALID_PROFILE_ERROR);
+            var profile = CreateProfile();
+            var serialized = new SerializedObject(profile);
+            serialized.FindProperty("profile").FindPropertyRelative("LandingSpeed").floatValue = 0f;
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            CreateRoot();
+            var frontend = AddFrontend();
+
+            Start(false, profile, FactoryFor(new InstantProvider(AuthResult.Success())));
+
+            Assert.IsNotNull(frontend.Session);
+        }
+
+        [Test]
+        public void Awake_NoFlightProfile_LogsAnErrorAndStillBuildsTheSession() {
+            LogAssert.Expect(LogType.Error, NO_PROFILE_ERROR);
+            CreateRoot();
+            var frontend = AddFrontend();
+
+            Start(false, (FlightProfileAsset)null, FactoryFor(new InstantProvider(AuthResult.Success())));
+
+            Assert.IsNotNull(frontend.Session);
         }
 
         [Test]

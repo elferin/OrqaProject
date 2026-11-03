@@ -19,12 +19,11 @@ namespace Drone.Core.Session {
         public IFlightInputSource ActiveSource => _router.Source;
         public bool InputFaulted => _router.SourceFaulted;
 
-        public DroneSession(IReadOnlyList<IAuthorizationProvider> providers) {
+        public DroneSession(AuthorizationGate gate, FlightInputRouter router, FlightController controller, IReadOnlyList<IAuthorizationProvider> providers) {
 
-            Gate = new AuthorizationGate();
-            _router = new FlightInputRouter();
-            Controller = new FlightController(Gate, _router);
-
+            Gate = gate;
+            _router = router;
+            Controller = controller;
             Providers = providers;
         }
 

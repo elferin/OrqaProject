@@ -1,8 +1,11 @@
+using System;
 using System.Collections.Generic;
 using Drone.Core.Authorization;
+using Drone.Core.Flight;
 using Drone.Core.Session;
 using Drone.Providers;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace Drone.App {
     
@@ -10,8 +13,9 @@ namespace Drone.App {
         
         [SerializeField] private bool autoStart;
         [SerializeField] private float autopilotAltitude = 3f;
+        [SerializeField] private FlightProfileAsset flightProfile;
     
-        [SerializeField] private AuthorizationProviderFactory[] authorizationProviderFactories = new AuthorizationProviderFactory[0];
+        [SerializeField] private AuthorizationProviderFactory[] authorizationProviderFactories = Array.Empty<AuthorizationProviderFactory>();
         
         private DroneSession _session;
         private IDroneFrontend[] _droneFrontends;
@@ -20,8 +24,11 @@ namespace Drone.App {
         
         private void Awake() {
             
-            IReadOnlyList<IAuthorizationProvider> providers = CreateProviders();
-            _session = new DroneSession(providers);
+            var providers = CreateProviders();
+            var gate = new AuthorizationGate();
+            var router = new FlightInputRouter();
+            var controller = new FlightController(gate, router, ValidatedProfile());
+            _session = new DroneSession(gate, router, controller, providers);
             var autopilot = new AutopilotInputSource(() => _session.Controller.Telemetry.Altitude, autopilotAltitude);
             _session.AddInputSource(autopilot);
             _droneFrontends = GetComponentsInChildren<IDroneFrontend>();
@@ -76,6 +83,21 @@ namespace Drone.App {
         private static bool IsAlive(IDroneFrontend frontend) {
 
             return !(frontend is Object unityObject) || unityObject != null;
+        }
+
+        private FlightProfile ValidatedProfile() {
+
+            if (flightProfile == null) {
+                Debug.LogError("No flight profile assigned, using the default", this);
+                return FlightProfile.Default;
+            }
+
+            if (flightProfile.Profile.IsValid) {
+                return flightProfile.Profile;
+            }
+
+            Debug.LogError("Invalid flight profile, using the default", this);
+            return FlightProfile.Default;
         }
 
         private IReadOnlyList<IAuthorizationProvider> CreateProviders() {

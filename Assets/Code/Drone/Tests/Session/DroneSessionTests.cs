@@ -8,8 +8,11 @@ namespace Drone.Tests {
 
     public class DroneSessionTests {
 
-        private static DroneSession CreateSession() {
-            return new DroneSession(new IAuthorizationProvider[0]);
+        private static DroneSession CreateSession(params IAuthorizationProvider[] providers) {
+            var gate = new AuthorizationGate();
+            var router = new FlightInputRouter();
+            var controller = new FlightController(gate, router, FlightProfile.Default);
+            return new DroneSession(gate, router, controller, providers);
         }
 
         [Test]

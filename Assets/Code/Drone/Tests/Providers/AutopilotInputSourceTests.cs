@@ -37,7 +37,7 @@ namespace Drone.Tests {
         [Test]
         public void Controller_FlyingOnAutopilot_ClimbsToTargetAndHolds() {
             var router = new FlightInputRouter();
-            var controller = new FlightController(new FakeClearance { IsCleared = true }, router);
+            var controller = new FlightController(new FakeClearance { IsCleared = true }, router, FlightProfile.Default);
             router.SetSource(new AutopilotInputSource(() => controller.Telemetry.Altitude, 3f));
             controller.Arm();
 
