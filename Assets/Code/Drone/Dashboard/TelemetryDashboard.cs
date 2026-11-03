@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace Drone.Dashboard {
 
-    public sealed class TelemetryDashboard : MonoBehaviour, IDroneFrontend {
+    public sealed class TelemetryDashboard : MonoBehaviour, IDroneDisplay {
 
         private const float REFRESH_INTERVAL = 0.1f;
         private const int TENTHS = 10;
@@ -28,15 +28,13 @@ namespace Drone.Dashboard {
         private int? _shownSpeedTenths;
 
 
-        public void Attach(DroneSession session) {
-            _readout = session;
+        public void Attach(IDroneReadout readout) {
+            _readout = readout;
             _readout.AuthStateChanged += MarkStatusDirty;
             _readout.FlightStateChanged += MarkStatusDirty;
             _readout.InputChanged += MarkStatusDirty;
             _statusDirty = true;
         }
-
-        public void FixedTick() { }
 
         public void FrameTick(float deltaTime) {
             if (_statusDirty) {

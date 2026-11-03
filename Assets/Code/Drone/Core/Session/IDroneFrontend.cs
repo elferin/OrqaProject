@@ -1,9 +1,7 @@
 namespace Drone.Core.Session {
-    
-    public interface IDroneFrontend {
+
+    public interface IDroneFrontend : IDroneClient {
         void Attach(DroneSession session);
         void FixedTick();
-        void FrameTick(float deltaTime);
-        void Detach();
     }
 }

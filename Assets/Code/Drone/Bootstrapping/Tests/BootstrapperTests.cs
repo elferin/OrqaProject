@@ -126,6 +126,27 @@ namespace Drone.App.Tests {
             Assert.AreSame(first.Session, second.Session);
         }
 
+        [UnityTest]
+        public IEnumerator Display_IsAttachedToTheSameSessionTickedAndDetached() {
+            CreateRoot();
+            var frontend = AddFrontend();
+            var displayObject = new GameObject("Display");
+            displayObject.transform.SetParent(_root.transform, false);
+            var display = displayObject.AddComponent<FakeDisplay>();
+            Start(false, FactoryFor(new InstantProvider(AuthResult.Success())));
+
+            yield return null;
+            yield return null;
+
+            Assert.AreSame(frontend.Session, display.Readout);
+            Assert.Greater(display.FrameTicks, 0);
+
+            Object.Destroy(_root);
+            yield return null;
+
+            Assert.AreEqual(1, display.DetachCount);
+        }
+
         [Test]
         public void Awake_WithAutopilot_MakesItTheActiveSource() {
             var frontend = StartWithFrontend(false, FactoryFor(new InstantProvider(AuthResult.Success())));

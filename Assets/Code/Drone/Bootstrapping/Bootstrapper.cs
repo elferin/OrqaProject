@@ -17,7 +17,8 @@ namespace Drone.App {
 
         [SerializeField] private AuthorizationProviderFactory[] authorizationProviderFactories = Array.Empty<AuthorizationProviderFactory>();
 
-        private readonly List<IDroneFrontend> _droneFrontends = new();
+        private readonly List<IDroneClient> _clients = new();
+        private readonly List<IDroneFrontend> _frontends = new();
         private DroneSession _session;
 
         private void Awake() {
@@ -29,10 +30,22 @@ namespace Drone.App {
             _session = new DroneSession(gate, router, controller, providers);
             var autopilot = new AutopilotInputSource(() => _session.Controller.Telemetry.Altitude, autopilotAltitude);
             _session.AddInputSource(autopilot);
+            
             foreach (var frontend in GetComponentsInChildren<IDroneFrontend>()) {
                 try {
                     frontend.Attach(_session);
-                    _droneFrontends.Add(frontend);
+                    _clients.Add(frontend);
+                    _frontends.Add(frontend);
+                }
+                catch (Exception exception) {
+                    Debug.LogException(exception, this);
+                }
+            }
+
+            foreach (var display in GetComponentsInChildren<IDroneDisplay>()) {
+                try {
+                    display.Attach(_session);
+                    _clients.Add(display);
                 }
                 catch (Exception exception) {
                     Debug.LogException(exception, this);
@@ -46,17 +59,18 @@ namespace Drone.App {
 
         private void Update() {
 
-            for (var i = 0; i < _droneFrontends.Count; i++) {
-                var frontend = _droneFrontends[i];
-                if (!IsAlive(frontend)) {
+            for (var i = 0; i < _clients.Count; i++) {
+                var client = _clients[i];
+                if (!IsAlive(client)) {
                     continue;
                 }
 
                 try {
-                    frontend.FrameTick(Time.unscaledDeltaTime);
+                    client.FrameTick(Time.unscaledDeltaTime);
                 }
                 catch (Exception exception) {
-                    DropFrontend(i--, exception);
+                    i--;
+                    DropClient(client, exception);
                 }
             }
         }
@@ -65,8 +79,8 @@ namespace Drone.App {
 
             _session.Tick(Time.fixedDeltaTime);
 
-            for (var i = 0; i < _droneFrontends.Count; i++) {
-                var frontend = _droneFrontends[i];
+            for (var i = 0; i < _frontends.Count; i++) {
+                var frontend = _frontends[i];
                 if (!IsAlive(frontend)) {
                     continue;
                 }
@@ -75,41 +89,45 @@ namespace Drone.App {
                     frontend.FixedTick();
                 }
                 catch (Exception exception) {
-                    DropFrontend(i--, exception);
+                    i--;
+                    DropClient(frontend, exception);
                 }
             }
         }
 
         private void OnDestroy() {
 
-            foreach (var frontend in _droneFrontends) {
-                DetachSafely(frontend);
+            foreach (var client in _clients) {
+                DetachSafely(client);
             }
-            _droneFrontends.Clear();
+            _clients.Clear();
+            _frontends.Clear();
             _session?.Dispose();
         }
 
-        private void DropFrontend(int index, Exception exception) {
+        private void DropClient(IDroneClient client, Exception exception) {
 
             Debug.LogException(exception, this);
-            var frontend = _droneFrontends[index];
-            _droneFrontends.RemoveAt(index);
-            DetachSafely(frontend);
+            _clients.Remove(client);
+            if (client is IDroneFrontend frontend) {
+                _frontends.Remove(frontend);
+            }
+            DetachSafely(client);
         }
 
-        private void DetachSafely(IDroneFrontend frontend) {
+        private void DetachSafely(IDroneClient client) {
 
             try {
-                frontend.Detach();
+                client.Detach();
             }
             catch (Exception exception) {
                 Debug.LogException(exception, this);
             }
         }
 
-        private static bool IsAlive(IDroneFrontend frontend) {
+        private static bool IsAlive(IDroneClient client) {
 
-            return !(frontend is Object unityObject) || unityObject != null;
+            return !(client is Object unityObject) || unityObject != null;
         }
 
         private FlightProfile ValidatedProfile() {
