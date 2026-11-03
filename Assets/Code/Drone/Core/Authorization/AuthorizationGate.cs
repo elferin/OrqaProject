@@ -19,7 +19,6 @@ namespace Drone.Core.Authorization {
             CancelCurrentAttempt();
             
             LastFailureReason = null;
-            SetState(AuthState.Authorizing);
 
             _cts = new CancellationTokenSource();
             try {
@@ -28,7 +27,8 @@ namespace Drone.Core.Authorization {
             catch (Exception e) {
                 _attempt = Task.FromException<AuthResult>(e);
             }
-            
+
+            SetState(AuthState.Authorizing);
             ApplyCompletedAttempt();
         }
         

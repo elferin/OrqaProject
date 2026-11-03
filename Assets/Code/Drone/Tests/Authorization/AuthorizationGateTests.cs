@@ -200,5 +200,42 @@ namespace Drone.Tests {
             Assert.AreEqual(AuthState.Failed, gate.State);
             Assert.AreEqual("Provider broke", gate.LastFailureReason);
         }
+
+        [Test]
+        public void Request_HandlerRevokesOnAuthorizing_StaysUnauthorized() {
+            using var gate = new AuthorizationGate();
+            gate.StateChanged += () => {
+                if (gate.State == AuthState.Authorizing) {
+                    gate.Revoke();
+                }
+            };
+
+            gate.Request(_authProvider);
+            _authProvider.Complete(AuthResult.Success());
+            gate.Pump();
+
+            Assert.AreEqual(AuthState.Unauthorized, gate.State);
+            Assert.IsTrue(_authProvider.WasCancelled);
+        }
+
+        [Test]
+        public void Request_HandlerRequestsAgainOnAuthorizing_CancelsTheFirstAttempt() {
+            using var gate = new AuthorizationGate();
+            var second = new FakeAuthorizationProvider();
+            var requested = false;
+            gate.StateChanged += () => {
+                if (gate.State == AuthState.Authorizing && !requested) {
+                    requested = true;
+                    gate.Request(second);
+                }
+            };
+
+            gate.Request(_authProvider);
+            second.Complete(AuthResult.Success());
+            gate.Pump();
+
+            Assert.IsTrue(_authProvider.WasCancelled);
+            Assert.AreEqual(AuthState.Authorized, gate.State);
+        }
     }
 }
