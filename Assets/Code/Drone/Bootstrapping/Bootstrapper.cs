@@ -64,6 +64,8 @@ namespace Drone.App {
             for (var i = 0; i < _clients.Count; i++) {
                 var client = _clients[i];
                 if (!IsAlive(client)) {
+                    i--;
+                    RemoveClient(client);
                     continue;
                 }
 
@@ -84,6 +86,8 @@ namespace Drone.App {
             for (var i = 0; i < _frontends.Count; i++) {
                 var frontend = _frontends[i];
                 if (!IsAlive(frontend)) {
+                    i--;
+                    RemoveClient(frontend);
                     continue;
                 }
 
@@ -110,6 +114,11 @@ namespace Drone.App {
         private void DropClient(IDroneClient client, Exception exception) {
 
             Debug.LogException(exception, this);
+            RemoveClient(client);
+        }
+
+        private void RemoveClient(IDroneClient client) {
+
             _clients.Remove(client);
             if (client is IDroneFrontend frontend) {
                 _frontends.Remove(frontend);

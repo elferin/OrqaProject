@@ -167,7 +167,7 @@ namespace Drone.App.Tests {
         }
 
         [UnityTest]
-        public IEnumerator Running_DestroyedFrontend_IsSkippedAndOthersKeepTicking() {
+        public IEnumerator Running_DestroyedFrontend_IsDetachedOnceAndOthersKeepTicking() {
             CreateRoot();
             var destroyed = AddFrontend();
             var survivor = AddFrontend();
@@ -188,7 +188,33 @@ namespace Drone.App.Tests {
             Assert.AreEqual(destroyedFixedTicks, destroyed.FixedTicks);
             Assert.Greater(survivor.FixedTicks, survivorFixedTicks);
             Assert.Greater(survivor.FrameTicks, survivorFrameTicks);
+            Assert.AreEqual(1, destroyed.DetachCount);
+
+            Object.Destroy(_root);
+            yield return null;
+
+            Assert.AreEqual(1, destroyed.DetachCount);
             LogAssert.NoUnexpectedReceived();
+        }
+
+        [UnityTest]
+        public IEnumerator Running_DestroyedDisplay_IsDetachedOnce() {
+            CreateRoot();
+            var displayObject = new GameObject("Display");
+            displayObject.transform.SetParent(_root.transform, false);
+            var display = displayObject.AddComponent<FakeDisplay>();
+            Start(false, FactoryFor(new InstantProvider(AuthResult.Success())));
+
+            Object.Destroy(displayObject);
+            yield return null;
+            yield return null;
+
+            Assert.AreEqual(1, display.DetachCount);
+
+            Object.Destroy(_root);
+            yield return null;
+
+            Assert.AreEqual(1, display.DetachCount);
         }
 
         [UnityTest]
