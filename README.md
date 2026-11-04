@@ -48,7 +48,9 @@ On 2026-11-03, a Windows player with no frontend or dashboard in the scene was r
 
 ## Performance
 
-Flight, authorization and input don't allocate per tick. The dashboard only rebuilds text when a shown value changes, and numbers use TextMesh Pro's `SetText`, which doesn't allocate in a player. That test only runs from the Test Runner's **Player** tab, because `SetText` allocates in the Editor.
+Flight, authorization and input don't allocate per tick. EditMode tests check the session tick while flying, on autopilot, landing, with a request pending and with a NaN input fault. A source that throws still allocates its own exception every tick.
+
+The dashboard only rebuilds text when a shown value changes, and numbers use TextMesh Pro's `SetText`, which doesn't allocate in a player. The test for changing numbers only runs from the Test Runner's **Player** tab, because `SetText` allocates in the Editor.
 
 ## Controls
 
