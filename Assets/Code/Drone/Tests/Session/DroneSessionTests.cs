@@ -275,6 +275,50 @@ namespace Drone.Tests {
         }
 
         [Test]
+        public void RequestAuthorization_ValidIndex_RequestsThatProvider() {
+            var first = new FakeAuthorizationProvider();
+            var second = new FakeAuthorizationProvider();
+            using var session = CreateSession(first, second);
+
+            session.RequestAuthorization(1);
+            second.Complete(AuthResult.Success());
+            session.Tick(0.02f);
+
+            Assert.AreEqual(AuthState.Authorized, session.AuthState);
+        }
+
+        [TestCase(-1)]
+        [TestCase(1)]
+        public void RequestAuthorization_IndexOutOfRange_DoesNothing(int providerIndex) {
+            using var session = CreateSession(new FakeAuthorizationProvider());
+
+            Assert.DoesNotThrow(() => session.RequestAuthorization(providerIndex));
+            Assert.AreEqual(AuthState.Unauthorized, session.AuthState);
+        }
+
+        [Test]
+        public void ReadOnlyReadout_IsNotAnOperator() {
+            using var session = CreateSession();
+
+            var readout = new ReadOnlyDroneReadout(session);
+
+            Assert.IsNotInstanceOf<IDroneOperator>(readout);
+        }
+
+        [Test]
+        public void ReadOnlyReadout_ForwardsStateAndEvents() {
+            using var session = CreateSession();
+            var readout = new ReadOnlyDroneReadout(session);
+            var auth = 0;
+            readout.AuthStateChanged += () => auth++;
+
+            session.Gate.Request(new FakeAuthorizationProvider());
+
+            Assert.AreEqual(1, auth);
+            Assert.AreEqual(AuthState.Authorizing, readout.AuthState);
+        }
+
+        [Test]
         public void Dispose_PendingAttempt_IsCancelled() {
             var session = CreateSession();
             var provider = new FakeAuthorizationProvider();

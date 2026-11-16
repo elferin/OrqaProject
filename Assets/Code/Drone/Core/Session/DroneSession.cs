@@ -46,7 +46,7 @@ namespace Drone.Core.Session {
         }
 
         public void RequestAuthorization(int providerIndex) {
-            if (Providers.Count > providerIndex) {
+            if (providerIndex < 0 || providerIndex >= Providers.Count) {
                 return;
             }
             

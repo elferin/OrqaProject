@@ -126,7 +126,7 @@ namespace Drone.App.Tests {
         }
 
         [UnityTest]
-        public IEnumerator Display_IsAttachedToTheSameSessionTickedAndDetached() {
+        public IEnumerator Display_IsAttachedReadOnlyTickedAndDetached() {
             CreateRoot();
             var frontend = AddFrontend();
             var displayObject = new GameObject("Display");
@@ -137,7 +137,9 @@ namespace Drone.App.Tests {
             yield return null;
             yield return null;
 
-            Assert.AreSame(frontend.Session, display.Readout);
+            Assert.IsNotNull(display.Readout);
+            Assert.IsNotInstanceOf<IDroneOperator>(display.Readout);
+            Assert.AreEqual(frontend.Session.AuthState, display.Readout.AuthState);
             Assert.Greater(display.FrameTicks, 0);
 
             Object.Destroy(_root);
