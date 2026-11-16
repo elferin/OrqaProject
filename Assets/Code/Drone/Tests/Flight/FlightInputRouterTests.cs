@@ -1,5 +1,6 @@
 using System;
 using System.Numerics;
+using Drone.Contracts;
 using Drone.Core.Flight;
 using NUnit.Framework;
 

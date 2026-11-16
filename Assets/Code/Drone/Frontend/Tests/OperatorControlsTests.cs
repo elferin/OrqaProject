@@ -1,5 +1,6 @@
 using System.Threading;
 using System.Threading.Tasks;
+using Drone.Contracts;
 using Drone.Core.Authorization;
 using Drone.Core.Flight;
 using Drone.Core.Session;
@@ -32,15 +33,13 @@ namespace Drone.Frontend.Tests {
         }
 
         private sealed class MarkedSource : IFlightInputSource {
-            public string DisplayName => "Marked";
+            public string DisplayName { get; }
 
-            private readonly float _yaw;
-
-            public MarkedSource(float yaw) {
-                _yaw = yaw;
+            public MarkedSource(string displayName) {
+                DisplayName = displayName;
             }
 
-            public FlightInput Sample() => new FlightInput(default, _yaw);
+            public FlightInput Sample() => default;
         }
 
         private DroneSession _session;
@@ -67,7 +66,7 @@ namespace Drone.Frontend.Tests {
 
         private OperatorControls CreateControls(params IAuthorizationProvider[] providers) {
             _session = CreateSession(providers);
-            _session.AddInputSource(new MarkedSource(0f));
+            _session.AddInputSource(new MarkedSource("Marked"));
             return new OperatorControls(_session);
         }
 
@@ -178,27 +177,27 @@ namespace Drone.Frontend.Tests {
         [Test]
         public void Tick_SwapKey_CyclesSourcesAndWraps() {
             _session = CreateSession();
-            _session.AddInputSource(new MarkedSource(0.5f));
-            _session.AddInputSource(new MarkedSource(0.9f));
+            _session.AddInputSource(new MarkedSource("First"));
+            _session.AddInputSource(new MarkedSource("Second"));
             var controls = new OperatorControls(_session);
 
             PressOnce(_keyboard.tabKey, controls);
-            Assert.AreEqual(0.9f, _session.ActiveSource.Sample().Yaw, 0.001f);
+            Assert.AreEqual("Second", _session.ActiveSource);
 
             PressOnce(_keyboard.tabKey, controls);
-            Assert.AreEqual(0.5f, _session.ActiveSource.Sample().Yaw, 0.001f);
+            Assert.AreEqual("First", _session.ActiveSource);
         }
 
         [Test]
         public void Tick_SwapKeyWithSourceAddedLater_IncludesIt() {
             _session = CreateSession();
-            _session.AddInputSource(new MarkedSource(0.5f));
+            _session.AddInputSource(new MarkedSource("First"));
             var controls = new OperatorControls(_session);
-            _session.AddInputSource(new MarkedSource(0.9f));
+            _session.AddInputSource(new MarkedSource("Second"));
 
             PressOnce(_keyboard.tabKey, controls);
 
-            Assert.AreEqual(0.9f, _session.ActiveSource.Sample().Yaw, 0.001f);
+            Assert.AreEqual("Second", _session.ActiveSource);
         }
     }
 }

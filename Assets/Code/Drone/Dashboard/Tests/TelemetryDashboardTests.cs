@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Threading;
 using System.Threading.Tasks;
+using Drone.Contracts;
 using Drone.Core.Authorization;
 using Drone.Core.Flight;
 using Drone.Core.Session;

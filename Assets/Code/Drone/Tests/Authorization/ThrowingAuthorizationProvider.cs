@@ -1,7 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
-using Drone.Core.Authorization;
+using Drone.Contracts;
 
 namespace Drone.Tests {
     sealed class ThrowingAuthorizationProvider : IAuthorizationProvider {

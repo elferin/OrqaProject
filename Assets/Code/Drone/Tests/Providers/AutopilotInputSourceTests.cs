@@ -1,3 +1,4 @@
+using Drone.Contracts;
 using Drone.Core.Flight;
 using Drone.Providers;
 using NUnit.Framework;

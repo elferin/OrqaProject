@@ -1,4 +1,4 @@
-using Drone.Core.Authorization;
+using Drone.Contracts;
 
 namespace Drone.App.Tests {
 

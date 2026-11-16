@@ -1,4 +1,5 @@
 using System.Collections;
+using Drone.Contracts;
 using Drone.Core.Authorization;
 using Drone.Core.Flight;
 using Drone.Core.Session;
@@ -38,7 +39,7 @@ namespace Drone.Frontend.Tests {
 
         [Test]
         public void Attach_AddsTheKeyboardAsASource() {
-            Assert.IsInstanceOf<KeyboardInputSource>(_session.ActiveSource);
+            Assert.AreEqual(new KeyboardInputSource().DisplayName, _session.ActiveSource);
         }
 
         [Test]

@@ -1,11 +1,11 @@
-using Drone.Core.Session;
+using Drone.Contracts;
 using UnityEngine;
 
 namespace Drone.App.Tests {
 
     public sealed class FakeFrontend : MonoBehaviour, IDroneFrontend {
 
-        public DroneSession Session { get; private set; }
+        public IDroneOperator Session { get; private set; }
         public int AttachCount { get; private set; }
         public int FixedTicks { get; private set; }
         public int FrameTicks { get; private set; }
@@ -16,7 +16,7 @@ namespace Drone.App.Tests {
         public bool ThrowOnFrameTick { get; set; }
         public bool ThrowOnDetach { get; set; }
 
-        public void Attach(DroneSession session) {
+        public void Attach(IDroneOperator session) {
             AttachCount++;
             if (ThrowOnAttach) {
                 throw new System.InvalidOperationException("Attach failed");

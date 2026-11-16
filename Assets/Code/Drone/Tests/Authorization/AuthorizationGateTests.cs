@@ -1,4 +1,5 @@
 using System;
+using Drone.Contracts;
 using Drone.Core.Authorization;
 using NUnit.Framework;
 

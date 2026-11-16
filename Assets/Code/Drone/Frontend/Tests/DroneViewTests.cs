@@ -1,5 +1,5 @@
 using System.Collections;
-using Drone.Core.Flight;
+using Drone.Contracts;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;

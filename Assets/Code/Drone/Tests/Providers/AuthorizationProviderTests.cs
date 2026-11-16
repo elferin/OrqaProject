@@ -1,6 +1,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using Drone.Contracts;
 using Drone.Core.Authorization;
 using Drone.Providers;
 using NUnit.Framework;

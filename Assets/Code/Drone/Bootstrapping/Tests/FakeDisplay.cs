@@ -1,4 +1,4 @@
-using Drone.Core.Session;
+using Drone.Contracts;
 using UnityEngine;
 
 namespace Drone.App.Tests {

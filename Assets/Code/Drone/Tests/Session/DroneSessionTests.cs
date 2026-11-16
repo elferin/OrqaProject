@@ -1,4 +1,5 @@
 using System.Numerics;
+using Drone.Contracts;
 using Drone.Core.Authorization;
 using Drone.Core.Flight;
 using Drone.Core.Session;
@@ -53,34 +54,34 @@ namespace Drone.Tests {
         [Test]
         public void AddInputSource_First_BecomesActive() {
             using var session = CreateSession();
-            var source = new FakeInputSource { Input = new FlightInput(Vector3.Zero, 0.5f) };
+            var source = new FakeInputSource { DisplayName = "First" };
 
             session.AddInputSource(source);
 
-            Assert.AreEqual(0.5f, session.ActiveSource.Sample().Yaw, 0.001f);
+            Assert.AreEqual("First", session.ActiveSource);
         }
 
         [Test]
         public void AddInputSource_Second_KeepsTheFirstActive() {
             using var session = CreateSession();
-            session.AddInputSource(new FakeInputSource { Input = new FlightInput(Vector3.Zero, 0.5f) });
+            session.AddInputSource(new FakeInputSource { DisplayName = "First" });
 
-            session.AddInputSource(new FakeInputSource { Input = new FlightInput(Vector3.Zero, 0.9f) });
+            session.AddInputSource(new FakeInputSource { DisplayName = "Second" });
 
-            Assert.AreEqual(0.5f, session.ActiveSource.Sample().Yaw, 0.001f);
+            Assert.AreEqual("First", session.ActiveSource);
         }
 
         [Test]
         public void SelectNextInputSource_TwoSources_CyclesAndWraps() {
             using var session = CreateSession();
-            session.AddInputSource(new FakeInputSource { Input = new FlightInput(Vector3.Zero, 0.5f) });
-            session.AddInputSource(new FakeInputSource { Input = new FlightInput(Vector3.Zero, 0.9f) });
+            session.AddInputSource(new FakeInputSource { DisplayName = "First" });
+            session.AddInputSource(new FakeInputSource { DisplayName = "Second" });
 
             session.SelectNextInputSource();
-            Assert.AreEqual(0.9f, session.ActiveSource.Sample().Yaw, 0.001f);
+            Assert.AreEqual("Second", session.ActiveSource);
 
             session.SelectNextInputSource();
-            Assert.AreEqual(0.5f, session.ActiveSource.Sample().Yaw, 0.001f);
+            Assert.AreEqual("First", session.ActiveSource);
         }
 
         [Test]
@@ -178,9 +179,9 @@ namespace Drone.Tests {
         [Test]
         public void RemoveInputSource_Active_SelectsTheNextOne() {
             using var session = CreateSession();
-            var first = new FakeInputSource();
-            var second = new FakeInputSource();
-            var third = new FakeInputSource();
+            var first = new FakeInputSource { DisplayName = "First" };
+            var second = new FakeInputSource { DisplayName = "Second" };
+            var third = new FakeInputSource { DisplayName = "Third" };
             session.AddInputSource(first);
             session.AddInputSource(second);
             session.AddInputSource(third);
@@ -188,29 +189,29 @@ namespace Drone.Tests {
 
             session.RemoveInputSource(second);
 
-            Assert.AreSame(third, session.ActiveSource);
+            Assert.AreEqual(third.DisplayName, session.ActiveSource);
         }
 
         [Test]
         public void RemoveInputSource_ActiveAndLast_WrapsToTheFirst() {
             using var session = CreateSession();
-            var first = new FakeInputSource();
-            var second = new FakeInputSource();
+            var first = new FakeInputSource { DisplayName = "First" };
+            var second = new FakeInputSource { DisplayName = "Second" };
             session.AddInputSource(first);
             session.AddInputSource(second);
             session.SelectNextInputSource();
 
             session.RemoveInputSource(second);
 
-            Assert.AreSame(first, session.ActiveSource);
+            Assert.AreEqual(first.DisplayName, session.ActiveSource);
         }
 
         [Test]
         public void RemoveInputSource_Inactive_KeepsTheActiveOneAndTheCycle() {
             using var session = CreateSession();
-            var first = new FakeInputSource();
-            var second = new FakeInputSource();
-            var third = new FakeInputSource();
+            var first = new FakeInputSource { DisplayName = "First" };
+            var second = new FakeInputSource { DisplayName = "Second" };
+            var third = new FakeInputSource { DisplayName = "Third" };
             session.AddInputSource(first);
             session.AddInputSource(second);
             session.AddInputSource(third);
@@ -219,15 +220,15 @@ namespace Drone.Tests {
 
             session.RemoveInputSource(first);
 
-            Assert.AreSame(third, session.ActiveSource);
+            Assert.AreEqual(third.DisplayName, session.ActiveSource);
             session.SelectNextInputSource();
-            Assert.AreSame(second, session.ActiveSource);
+            Assert.AreEqual(second.DisplayName, session.ActiveSource);
         }
 
         [Test]
         public void RemoveInputSource_Only_LeavesNoSource() {
             using var session = CreateSession();
-            var source = new FakeInputSource();
+            var source = new FakeInputSource { DisplayName = "Source" };
             session.AddInputSource(source);
 
             session.RemoveInputSource(source);
@@ -238,39 +239,39 @@ namespace Drone.Tests {
         [Test]
         public void RemoveInputSource_Unknown_DoesNothing() {
             using var session = CreateSession();
-            var source = new FakeInputSource();
+            var source = new FakeInputSource { DisplayName = "Source" };
             session.AddInputSource(source);
 
             session.RemoveInputSource(new FakeInputSource());
 
-            Assert.AreSame(source, session.ActiveSource);
+            Assert.AreEqual(source.DisplayName, session.ActiveSource);
         }
 
         [Test]
         public void SelectInputSource_Known_MakesItActiveAndContinuesTheCycleFromIt() {
             using var session = CreateSession();
-            var first = new FakeInputSource();
-            var second = new FakeInputSource();
-            var third = new FakeInputSource();
+            var first = new FakeInputSource { DisplayName = "First" };
+            var second = new FakeInputSource { DisplayName = "Second" };
+            var third = new FakeInputSource { DisplayName = "Third" };
             session.AddInputSource(first);
             session.AddInputSource(second);
             session.AddInputSource(third);
 
             Assert.IsTrue(session.SelectInputSource(third));
-            Assert.AreSame(third, session.ActiveSource);
+            Assert.AreEqual(third.DisplayName, session.ActiveSource);
 
             session.SelectNextInputSource();
-            Assert.AreSame(first, session.ActiveSource);
+            Assert.AreEqual(first.DisplayName, session.ActiveSource);
         }
 
         [Test]
         public void SelectInputSource_Unknown_ReturnsFalseAndKeepsTheActiveOne() {
             using var session = CreateSession();
-            var source = new FakeInputSource();
+            var source = new FakeInputSource { DisplayName = "Source" };
             session.AddInputSource(source);
 
             Assert.IsFalse(session.SelectInputSource(new FakeInputSource()));
-            Assert.AreSame(source, session.ActiveSource);
+            Assert.AreEqual(source.DisplayName, session.ActiveSource);
         }
 
         [Test]

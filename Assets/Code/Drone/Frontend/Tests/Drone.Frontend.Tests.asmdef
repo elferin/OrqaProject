@@ -2,6 +2,7 @@
     "name": "Drone.Frontend.Tests",
     "rootNamespace": "Drone.Frontend.Tests",
     "references": [
+        "GUID:976b1525c4cf84063b0c9c2ed39603cb",
         "GUID:a92a28ce78e1e8e4096e67cbb9fce4dd",
         "GUID:4704feea54522124ea8be31def2d6c26",
         "GUID:75469ad4d38634e559750d17036d5f7c",
