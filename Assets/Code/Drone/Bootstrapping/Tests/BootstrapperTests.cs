@@ -4,7 +4,6 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Drone.Contracts;
-using Drone.Core.Flight;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;

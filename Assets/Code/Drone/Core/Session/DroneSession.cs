@@ -7,6 +7,7 @@ using Drone.Core.Flight;
 namespace Drone.Core.Session {
     
     public sealed class DroneSession : IDroneOperator, IDisposable {
+        
         public AuthorizationGate Gate { get; }
         public FlightController Controller { get; }
         public IReadOnlyList<IAuthorizationProvider> Providers { get; }
@@ -44,7 +45,13 @@ namespace Drone.Core.Session {
             Providers = providers;
         }
 
-        public void RequestAuthorization(IAuthorizationProvider provider) => Gate.Request(provider);
+        public void RequestAuthorization(int providerIndex) {
+            if (Providers.Count > providerIndex) {
+                return;
+            }
+            
+            Gate.Request(Providers[providerIndex]);
+        }
 
         public void Revoke() => Gate.Revoke();
 

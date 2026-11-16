@@ -5,7 +5,7 @@ namespace Drone.Contracts {
     public interface IDroneOperator : IDroneReadout {
         
         IReadOnlyList<IAuthorizationProvider> Providers { get; }
-        void RequestAuthorization(IAuthorizationProvider provider);
+        void RequestAuthorization(int providerIndex);
         void Revoke();
         void Arm();
         void Disarm();

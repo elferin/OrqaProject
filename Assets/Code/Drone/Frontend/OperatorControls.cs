@@ -22,7 +22,7 @@ namespace Drone.Frontend {
             var providers = _session.Providers;
             for (var i = 0; i < providers.Count && i < MAX_PROVIDER_KEYS; i++) {
                 if (keyboard[Key.Digit1 + i].wasPressedThisFrame) {
-                    _session.RequestAuthorization(providers[i]);
+                    _session.RequestAuthorization(i);
                 }
             }
 
