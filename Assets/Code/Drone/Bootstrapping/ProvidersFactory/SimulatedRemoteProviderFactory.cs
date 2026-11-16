@@ -1,5 +1,5 @@
 using System;
-using Drone.Core.Authorization;
+using Drone.Contracts;
 using Drone.Providers;
 using UnityEngine;
 

@@ -1,4 +1,4 @@
-namespace Drone.Core.Authorization {
+namespace Drone.Contracts {
     
     public enum AuthState {
         Unauthorized, 

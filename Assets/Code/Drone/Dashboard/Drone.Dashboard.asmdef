@@ -2,7 +2,7 @@
     "name": "Drone.Dashboard",
     "rootNamespace": "Drone.Dashboard",
     "references": [
-        "GUID:a92a28ce78e1e8e4096e67cbb9fce4dd",
+        "GUID:976b1525c4cf84063b0c9c2ed39603cb",
         "GUID:6055be8ebefd69e48b49212b09b47b2f",
         "GUID:2bafac87e7f4b9b418d9448d219b01ab"
     ],

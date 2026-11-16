@@ -1,4 +1,5 @@
 using System;
+using Drone.Contracts;
 
 namespace Drone.Core.Flight {
 

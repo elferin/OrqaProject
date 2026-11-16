@@ -1,4 +1,4 @@
-namespace Drone.Core.Flight {
+namespace Drone.Contracts {
     
     public interface IFlightInputSource {
         

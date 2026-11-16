@@ -1,4 +1,4 @@
-namespace Drone.Core.Session {
+namespace Drone.Contracts {
 
     public interface IDroneClient {
         void FrameTick(float deltaTime);

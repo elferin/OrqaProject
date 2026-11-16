@@ -1,6 +1,6 @@
 using System;
 using System.Numerics;
-using Drone.Core.Flight;
+using Drone.Contracts;
 
 namespace Drone.Providers {
 

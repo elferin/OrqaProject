@@ -1,5 +1,5 @@
 using System.Numerics;
-using Drone.Core.Flight;
+using Drone.Contracts;
 using UnityEngine.InputSystem;
 
 namespace Drone.Frontend {

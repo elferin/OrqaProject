@@ -1,4 +1,4 @@
-namespace Drone.Core.Authorization {
+namespace Drone.Contracts {
     
     public readonly struct AuthResult {
         

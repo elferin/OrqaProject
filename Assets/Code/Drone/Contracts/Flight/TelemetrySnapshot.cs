@@ -1,6 +1,6 @@
 using System.Numerics;
 
-namespace Drone.Core.Flight {
+namespace Drone.Contracts {
     
     public readonly struct TelemetrySnapshot {
         

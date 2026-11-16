@@ -1,6 +1,4 @@
-using Drone.Core.Authorization;
-using Drone.Core.Flight;
-using Drone.Core.Session;
+using Drone.Contracts;
 using TMPro;
 using UnityEngine;
 
@@ -81,12 +79,12 @@ namespace Drone.Dashboard {
             inputText.text = InputLabel(_readout.ActiveSource, _readout.InputFaulted);
         }
 
-        private static string InputLabel(IFlightInputSource source, bool faulted) {
-            if (source == null) {
+        private static string InputLabel(string sourceDisplayName, bool faulted) {
+            if (sourceDisplayName == null) {
                 return "Input: None";
             }
 
-            return "Input: " + source.DisplayName + (faulted ? FAULT_SUFFIX : string.Empty);
+            return "Input: " + sourceDisplayName + (faulted ? FAULT_SUFFIX : string.Empty);
         }
 
         private static string AuthLabel(AuthState state) {

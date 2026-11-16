@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Drone.Contracts;
 using Drone.Core.Authorization;
 using Drone.Core.Flight;
 using Drone.Core.Session;

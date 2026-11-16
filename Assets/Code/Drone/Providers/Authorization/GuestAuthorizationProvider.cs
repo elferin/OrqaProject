@@ -1,6 +1,6 @@
 using System.Threading;
 using System.Threading.Tasks;
-using Drone.Core.Authorization;
+using Drone.Contracts;
 
 namespace Drone.Providers {
 

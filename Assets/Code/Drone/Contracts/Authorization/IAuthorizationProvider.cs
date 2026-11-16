@@ -1,7 +1,7 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Drone.Core.Authorization {
+namespace Drone.Contracts {
     
     public interface IAuthorizationProvider {
 

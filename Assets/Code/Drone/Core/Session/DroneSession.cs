@@ -1,11 +1,12 @@
 using System;
 using System.Collections.Generic;
+using Drone.Contracts;
 using Drone.Core.Authorization;
 using Drone.Core.Flight;
 
 namespace Drone.Core.Session {
     
-    public sealed class DroneSession : IDisposable, IDroneReadout {
+    public sealed class DroneSession : IDroneOperator, IDisposable {
         public AuthorizationGate Gate { get; }
         public FlightController Controller { get; }
         public IReadOnlyList<IAuthorizationProvider> Providers { get; }
@@ -17,7 +18,7 @@ namespace Drone.Core.Session {
         public AuthState AuthState => Gate.State;
         public string FailureReason => Gate.LastFailureReason;
         public TelemetrySnapshot Telemetry => Controller.Telemetry;
-        public IFlightInputSource ActiveSource => _router.Source;
+        public string ActiveSource => _router.Source?.DisplayName;
         public bool InputFaulted => _router.SourceFaulted;
 
         public event Action AuthStateChanged {
@@ -42,6 +43,14 @@ namespace Drone.Core.Session {
             Controller = controller;
             Providers = providers;
         }
+
+        public void RequestAuthorization(IAuthorizationProvider provider) => Gate.Request(provider);
+
+        public void Revoke() => Gate.Revoke();
+
+        public void Arm() => Controller.Arm();
+
+        public void Disarm() => Controller.Disarm();
 
         public void AddInputSource(IFlightInputSource flightInputSource) {
             

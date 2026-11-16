@@ -1,4 +1,4 @@
-using Drone.Core.Session;
+using Drone.Contracts;
 using UnityEngine.InputSystem;
 
 namespace Drone.Frontend {
@@ -7,9 +7,9 @@ namespace Drone.Frontend {
 
         private const int MAX_PROVIDER_KEYS = 9;
 
-        private readonly DroneSession _session;
+        private readonly IDroneOperator _session;
 
-        public OperatorControls(DroneSession session) {
+        public OperatorControls(IDroneOperator session) {
             _session = session;
         }
 
@@ -22,20 +22,20 @@ namespace Drone.Frontend {
             var providers = _session.Providers;
             for (var i = 0; i < providers.Count && i < MAX_PROVIDER_KEYS; i++) {
                 if (keyboard[Key.Digit1 + i].wasPressedThisFrame) {
-                    _session.Gate.Request(providers[i]);
+                    _session.RequestAuthorization(providers[i]);
                 }
             }
 
             if (keyboard.rKey.wasPressedThisFrame) {
-                _session.Gate.Revoke();
+                _session.Revoke();
             }
 
             if (keyboard.fKey.wasPressedThisFrame) {
-                _session.Controller.Arm();
+                _session.Arm();
             }
 
             if (keyboard.gKey.wasPressedThisFrame) {
-                _session.Controller.Disarm();
+                _session.Disarm();
             }
 
             if (keyboard.tabKey.wasPressedThisFrame) {

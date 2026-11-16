@@ -1,7 +1,7 @@
-namespace Drone.Core.Session {
+namespace Drone.Contracts {
 
     public interface IDroneFrontend : IDroneClient {
-        void Attach(DroneSession session);
+        void Attach(IDroneOperator droneOperator);
         void FixedTick();
     }
 }

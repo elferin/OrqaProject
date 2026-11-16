@@ -1,16 +1,16 @@
-using Drone.Core.Session;
+using Drone.Contracts;
 using UnityEngine;
 
 namespace Drone.Frontend {
 
     public sealed class DroneFrontend : MonoBehaviour, IDroneFrontend {
 
-        private DroneSession _session;
+        private IDroneOperator _session;
         private KeyboardInputSource _keyboard;
         private OperatorControls _controls;
         private DroneView _view;
 
-        public void Attach(DroneSession session) {
+        public void Attach(IDroneOperator session) {
             _session = session;
             _keyboard = new KeyboardInputSource();
             _session.AddInputSource(_keyboard);
@@ -19,7 +19,7 @@ namespace Drone.Frontend {
         }
 
         public void FixedTick() {
-            _view.Capture(_session.Controller.Telemetry);
+            _view.Capture(_session.Telemetry);
         }
 
         public void FrameTick(float deltaTime) {
