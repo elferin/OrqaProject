@@ -32,8 +32,6 @@ namespace Drone.App {
             var autopilot = new AutopilotInputSource(() => _session.Controller.Telemetry.Altitude, autopilotAltitude);
             _session.AddInputSource(autopilot);
             
-            var readOnlyDroneReadout = new ReadOnlyDroneReadout(_session);
-            
             foreach (var frontend in GetComponentsInChildren<IDroneFrontend>()) {
                 try {
                     frontend.Attach(_session);
@@ -48,7 +46,7 @@ namespace Drone.App {
 
             foreach (var display in GetComponentsInChildren<IDroneDisplay>()) {
                 try {
-                    display.Attach(readOnlyDroneReadout);
+                    display.Attach(_session.Readout);
                     _clients.Add(display);
                 }
                 catch (Exception exception) {

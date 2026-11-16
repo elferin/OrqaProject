@@ -7,23 +7,25 @@ A minimal Unity prototype of a drone flight module with gatekept authorization, 
 Each module is its own assembly, and references point one way only:
 
 ```
-Drone.App ──────┬──> Drone.Providers ──> Drone.Core
-                └──────────────────────> Drone.Core
-Drone.Frontend ────────────────────────> Drone.Core
-Drone.Dashboard ───────────────────────> Drone.Core
+Drone.App ──────┬──> Drone.Core ───────┐
+                └──> Drone.Providers ──┤
+Drone.Frontend ────────────────────────┼──> Drone.Contracts
+Drone.Dashboard ───────────────────────┘
 ```
 
 | Assembly | Responsibility | Unity dependency |
 |---|---|---|
-| `Drone.Core` | Authorization gate, flight controller and profile, input router, session, interfaces | None |
+| `Drone.Contracts` | Interfaces and data types every module shares, no logic | None |
+| `Drone.Core` | Authorization gate, flight controller and profile, input router, session | None |
 | `Drone.Providers` | Guest and simulated remote authorization, autopilot | None |
 | `Drone.App` | `Bootstrapper`, the single composition root, and its assets | Yes |
 | `Drone.Frontend` | Keyboard source, operator controls, drone view | Yes |
 | `Drone.Dashboard` | Telemetry readout | Yes |
 
+- **Only the composition root sees the implementation.** Providers, Frontend and Dashboard reference `Drone.Contracts` alone, so the compiler stops them from naming the gate, the controller or the session. Only `Drone.App` references `Drone.Core`.
 - **One composition root, no singletons.** `Bootstrapper` builds the gate, router, controller and session, and finds clients on its children through `IDroneFrontend` and `IDroneDisplay`. It references neither frontend assembly, so deleting one needs no code changes. The keyboard source is the one exception: `DroneFrontend` creates it, because `Drone.App` can't reference that assembly.
 - **Flight only knows `IFlightClearance` and `IFlightInputSource`.** It never sees a provider or where its input comes from. Sources can be added, removed and swapped at runtime.
-- **Displays are read-only by type.** The dashboard is attached with `IDroneReadout` and can't reach `Arm` or `Revoke`. Operator frontends get the full session.
+- **Clients get only what they need.** Frontends get `IDroneOperator`, which can arm, disarm, revoke, swap sources and request a provider by its number. They never see a provider object, so the gate is the only code that calls one. Displays get `IDroneReadout` through a read-only proxy the session owns, so casting it can't reach `Arm` or `Revoke`.
 - **State changes are pushed, telemetry is pulled.** Auth, flight and input changes raise events. The dashboard's handler only sets a dirty flag, so it never runs UI code inside the flight tick. Altitude and speed change continuously, so it polls them at 10 Hz.
 - **Hardware tuning is data.** A `FlightProfile` asset holds acceleration, speeds and yaw rate. A new airframe is a new asset assigned on `Boot`.
 

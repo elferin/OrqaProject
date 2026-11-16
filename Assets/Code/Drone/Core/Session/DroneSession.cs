@@ -11,6 +11,7 @@ namespace Drone.Core.Session {
         public AuthorizationGate Gate { get; }
         public FlightController Controller { get; }
         public IReadOnlyList<IAuthorizationProvider> Providers { get; }
+        public IDroneReadout Readout { get; }
         private readonly FlightInputRouter _router;
         private readonly List<IFlightInputSource> _inputSources = new();
         private int _activeSourceIndex;
@@ -19,6 +20,7 @@ namespace Drone.Core.Session {
         public AuthState AuthState => Gate.State;
         public string FailureReason => Gate.LastFailureReason;
         public TelemetrySnapshot Telemetry => Controller.Telemetry;
+        public int ProviderCount => Providers.Count;
         public string ActiveSource => _router.Source?.DisplayName;
         public bool InputFaulted => _router.SourceFaulted;
 
@@ -43,6 +45,7 @@ namespace Drone.Core.Session {
             _router = router;
             Controller = controller;
             Providers = providers;
+            Readout = new ReadOnlyDroneReadout(this);
         }
 
         public void RequestAuthorization(int providerIndex) {

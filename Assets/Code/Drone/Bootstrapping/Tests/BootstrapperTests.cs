@@ -307,7 +307,7 @@ namespace Drone.App.Tests {
 
             var frontend = StartWithFrontend(false, null, FactoryFor(new InstantProvider(AuthResult.Success())));
 
-            Assert.AreEqual(1, frontend.Session.Providers.Count);
+            Assert.AreEqual(1, frontend.Session.ProviderCount);
         }
 
         [Test]
@@ -342,7 +342,7 @@ namespace Drone.App.Tests {
 
             var frontend = StartWithFrontend(false);
 
-            Assert.AreEqual(0, frontend.Session.Providers.Count);
+            Assert.AreEqual(0, frontend.Session.ProviderCount);
         }
 
         [Test]
@@ -353,7 +353,7 @@ namespace Drone.App.Tests {
 
             var frontend = StartWithFrontend(false, broken, FactoryFor(new InstantProvider(AuthResult.Success())));
 
-            Assert.AreEqual(1, frontend.Session.Providers.Count);
+            Assert.AreEqual(1, frontend.Session.ProviderCount);
         }
 
         [UnityTest]

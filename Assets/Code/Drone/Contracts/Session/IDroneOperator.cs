@@ -1,16 +1,14 @@
-using System.Collections.Generic;
-
 namespace Drone.Contracts {
-    
+
     public interface IDroneOperator : IDroneReadout {
-        
-        IReadOnlyList<IAuthorizationProvider> Providers { get; }
+
+        int ProviderCount { get; }
         void RequestAuthorization(int providerIndex);
         void Revoke();
         void Arm();
         void Disarm();
-        public void AddInputSource(IFlightInputSource flightInputSource);
-        public void RemoveInputSource(IFlightInputSource flightInputSource);
-        public void SelectNextInputSource();
+        void AddInputSource(IFlightInputSource flightInputSource);
+        void RemoveInputSource(IFlightInputSource flightInputSource);
+        void SelectNextInputSource();
     }
 }

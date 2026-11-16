@@ -300,7 +300,7 @@ namespace Drone.Tests {
         public void ReadOnlyReadout_IsNotAnOperator() {
             using var session = CreateSession();
 
-            var readout = new ReadOnlyDroneReadout(session);
+            var readout = session.Readout;
 
             Assert.IsNotInstanceOf<IDroneOperator>(readout);
         }
@@ -308,7 +308,7 @@ namespace Drone.Tests {
         [Test]
         public void ReadOnlyReadout_ForwardsStateAndEvents() {
             using var session = CreateSession();
-            var readout = new ReadOnlyDroneReadout(session);
+            var readout = session.Readout;
             var auth = 0;
             readout.AuthStateChanged += () => auth++;
 

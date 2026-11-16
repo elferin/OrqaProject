@@ -19,8 +19,8 @@ namespace Drone.Frontend {
                 return;
             }
 
-            var providers = _session.Providers;
-            for (var i = 0; i < providers.Count && i < MAX_PROVIDER_KEYS; i++) {
+            var providerCount = _session.ProviderCount;
+            for (var i = 0; i < providerCount && i < MAX_PROVIDER_KEYS; i++) {
                 if (keyboard[Key.Digit1 + i].wasPressedThisFrame) {
                     _session.RequestAuthorization(i);
                 }
