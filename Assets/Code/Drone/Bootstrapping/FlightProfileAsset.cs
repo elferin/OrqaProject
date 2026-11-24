@@ -7,7 +7,26 @@ namespace Drone.App {
     public sealed class FlightProfileAsset : ScriptableObject {
 
         [SerializeField] private FlightProfile profile = FlightProfile.Default;
+        
+        public static FlightProfile ValidateOrDefault(FlightProfileAsset asset, Object context) {
 
-        public FlightProfile Profile => profile;
+            if (asset == null) {
+                Debug.LogError("No flight profile assigned, using the default", context);
+                return FlightProfile.Default;
+            }
+
+            if (asset.profile.IsValid) {
+                return asset.profile;
+            }
+
+            Debug.LogError("Invalid flight profile, using the default", context);
+            return FlightProfile.Default;
+        }
+
+        private void OnValidate() {
+            if(!profile.IsValid) {
+                Debug.LogWarning("Flight profile values must be positive and finite", this);
+            }
+        }
     }
 }
