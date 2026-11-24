@@ -1,3 +1,4 @@
+using System;
 using Drone.Contracts;
 using TMPro;
 using UnityEngine;
@@ -81,6 +82,10 @@ namespace Drone.Dashboard {
             reasonText.text = _readout.FailureReason;
             flightText.text = FlightLabel(_readout.Telemetry.FlightState);
             inputText.text = InputLabel(_readout.ActiveSource, _readout.InputFaulted);
+        }
+
+        private void OnDestroy() {
+            Detach();
         }
 
         private static string InputLabel(string sourceDisplayName, bool faulted) {

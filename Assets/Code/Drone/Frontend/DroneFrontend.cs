@@ -28,6 +28,10 @@ namespace Drone.Frontend {
         }
 
         private void FixedUpdate() {
+            if (_session == null) {
+                return;
+            }
+            
             _view.Capture(_session.Telemetry);
         }
 
