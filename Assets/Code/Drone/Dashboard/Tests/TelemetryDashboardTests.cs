@@ -37,7 +37,9 @@ namespace Drone.Dashboard.Tests {
 
         [UnityTearDown]
         public IEnumerator TearDown() {
-            Object.Destroy(_dashboard.gameObject);
+            if (_dashboard != null) {
+                Object.Destroy(_dashboard.gameObject);
+            }
             yield return null;
         }
 
@@ -81,12 +83,94 @@ namespace Drone.Dashboard.Tests {
             public Task<AuthResult> AuthorizeAsync(CancellationToken cancellationToken) => Task.FromResult(_result);
         }
 
+        private sealed class CountingReadout : IDroneReadout {
+            public int Subscribers { get; private set; }
+
+            public AuthState AuthState => AuthState.Unauthorized;
+            public string FailureReason => null;
+            public TelemetrySnapshot Telemetry => default;
+            public string ActiveSource => null;
+            public bool InputFaulted => false;
+
+            public event System.Action AuthStateChanged {
+                add => Subscribers++;
+                remove => Subscribers--;
+            }
+
+            public event System.Action FlightStateChanged {
+                add => Subscribers++;
+                remove => Subscribers--;
+            }
+
+            public event System.Action InputChanged {
+                add => Subscribers++;
+                remove => Subscribers--;
+            }
+        }
+
         [Test]
-        public void FrameTick_First_ShowsAllValues() {
+        public void Attach_SubscribesToAllThreeEvents() {
+            var readout = new CountingReadout();
+
+            _dashboard.Attach(readout);
+
+            Assert.AreEqual(3, readout.Subscribers);
+        }
+
+        [Test]
+        public void Detach_Twice_UnsubscribesOnceAndDoesNotThrow() {
+            var readout = new CountingReadout();
+            _dashboard.Attach(readout);
+
+            _dashboard.Detach();
+
+            Assert.DoesNotThrow(() => _dashboard.Detach());
+            Assert.AreEqual(0, readout.Subscribers);
+        }
+
+        [Test]
+        public void Detach_NeverAttached_DoesNotThrow() {
+            Assert.DoesNotThrow(() => _dashboard.Detach());
+        }
+
+        [UnityTest]
+        public IEnumerator Destroy_DetachesItself() {
+            var readout = new CountingReadout();
+            _dashboard.Attach(readout);
+
+            Object.Destroy(_dashboard.gameObject);
+            yield return null;
+
+            Assert.AreEqual(0, readout.Subscribers);
+        }
+
+        [UnityTest]
+        public IEnumerator Update_NotAttached_DoesNothing() {
+            Text("Auth").text = "Untouched";
+
+            yield return null;
+            yield return null;
+
+            Assert.AreEqual("Untouched", Line("Auth"));
+        }
+
+        [UnityTest]
+        public IEnumerator Update_Attached_RefreshesOnItsOwn() {
+            using var session = CreateSession();
+            _dashboard.Attach(session);
+            Text("Auth").text = "Untouched";
+
+            yield return null;
+
+            Assert.AreEqual("Auth: Unauthorized", Line("Auth"));
+        }
+
+        [Test]
+        public void Refresh_First_ShowsAllValues() {
             using var session = CreateSession();
             _dashboard.Attach(session);
 
-            _dashboard.FrameTick(WITHIN_INTERVAL);
+            _dashboard.Refresh(WITHIN_INTERVAL);
 
             Assert.AreEqual("Auth: Unauthorized", Line("Auth"));
             Assert.AreEqual("Flight: Grounded", Line("Flight"));
@@ -96,33 +180,33 @@ namespace Drone.Dashboard.Tests {
         }
 
         [Test]
-        public void FrameTick_SourceChanges_ShowsTheActiveSource() {
+        public void Refresh_SourceChanges_ShowsTheActiveSource() {
             using var session = CreateSession();
             session.AddInputSource(new AlphaInputSource());
             session.AddInputSource(new BetaInputSource());
             _dashboard.Attach(session);
 
-            _dashboard.FrameTick(WITHIN_INTERVAL);
+            _dashboard.Refresh(WITHIN_INTERVAL);
             Assert.AreEqual("Input: Alpha", Line("Input"));
 
             session.SelectNextInputSource();
-            _dashboard.FrameTick(WITHIN_INTERVAL);
+            _dashboard.Refresh(WITHIN_INTERVAL);
             Assert.AreEqual("Input: Beta", Line("Input"));
         }
 
         [Test]
-        public void FrameTick_ShowsTheDisplayNameNotTheClassName() {
+        public void Refresh_ShowsTheDisplayNameNotTheClassName() {
             using var session = CreateSession();
             session.AddInputSource(new RenamedClassSource());
             _dashboard.Attach(session);
 
-            _dashboard.FrameTick(WITHIN_INTERVAL);
+            _dashboard.Refresh(WITHIN_INTERVAL);
 
             Assert.AreEqual("Input: Pilot", Line("Input"));
         }
 
         [Test]
-        public void FrameTick_SourceFaults_ShowsTheFault() {
+        public void Refresh_SourceFaults_ShowsTheFault() {
             using var session = CreateSession();
             session.AddInputSource(new ThrowingInputSource());
             session.Gate.Request(new InstantProvider(AuthResult.Success()));
@@ -130,71 +214,71 @@ namespace Drone.Dashboard.Tests {
             _dashboard.Attach(session);
 
             session.Tick(WITHIN_INTERVAL);
-            _dashboard.FrameTick(WITHIN_INTERVAL);
+            _dashboard.Refresh(WITHIN_INTERVAL);
 
             Assert.AreEqual("Input: Throwing (fault)", Line("Input"));
         }
 
         [Test]
-        public void FrameTick_AuthChanges_ShowsItWithoutWaitingForTheInterval() {
+        public void Refresh_AuthChanges_ShowsItWithoutWaitingForTheInterval() {
             using var session = CreateSession();
             _dashboard.Attach(session);
-            _dashboard.FrameTick(PAST_INTERVAL);
+            _dashboard.Refresh(PAST_INTERVAL);
 
             session.Gate.Request(new InstantProvider(AuthResult.Denied("No licence")));
-            _dashboard.FrameTick(WITHIN_INTERVAL);
+            _dashboard.Refresh(WITHIN_INTERVAL);
 
             Assert.AreEqual("Auth: Denied", Line("Auth"));
             Assert.AreEqual("No licence", Line("Reason"));
         }
 
         [Test]
-        public void FrameTick_AfterRevoke_ClearsTheReason() {
+        public void Refresh_AfterRevoke_ClearsTheReason() {
             using var session = CreateSession();
             _dashboard.Attach(session);
             session.Gate.Request(new InstantProvider(AuthResult.Denied("No licence")));
-            _dashboard.FrameTick(WITHIN_INTERVAL);
+            _dashboard.Refresh(WITHIN_INTERVAL);
 
             session.Gate.Revoke();
-            _dashboard.FrameTick(WITHIN_INTERVAL);
+            _dashboard.Refresh(WITHIN_INTERVAL);
 
             Assert.AreEqual("Auth: Unauthorized", Line("Auth"));
             Assert.IsTrue(string.IsNullOrEmpty(Line("Reason")));
         }
 
         [Test]
-        public void FrameTick_FlightStateChanges_ShowsItWithoutWaitingForTheInterval() {
+        public void Refresh_FlightStateChanges_ShowsItWithoutWaitingForTheInterval() {
             using var session = CreateSession();
             session.Gate.Request(new InstantProvider(AuthResult.Success()));
             _dashboard.Attach(session);
-            _dashboard.FrameTick(PAST_INTERVAL);
+            _dashboard.Refresh(PAST_INTERVAL);
 
             session.Controller.Arm();
-            _dashboard.FrameTick(WITHIN_INTERVAL);
+            _dashboard.Refresh(WITHIN_INTERVAL);
 
             Assert.AreEqual("Flight: Armed", Line("Flight"));
         }
 
         [Test]
-        public void FrameTick_NoStateChange_DoesNotRewriteTheStatusLines() {
+        public void Refresh_NoStateChange_DoesNotRewriteTheStatusLines() {
             using var session = CreateSession();
             _dashboard.Attach(session);
-            _dashboard.FrameTick(WITHIN_INTERVAL);
+            _dashboard.Refresh(WITHIN_INTERVAL);
             Text("Auth").text = "Untouched";
 
-            _dashboard.FrameTick(PAST_INTERVAL);
+            _dashboard.Refresh(PAST_INTERVAL);
 
             Assert.AreEqual("Untouched", Line("Auth"));
         }
 
         [Test]
-        public void FrameTick_NoStateChange_AllocatesNothing() {
+        public void Refresh_NoStateChange_AllocatesNothing() {
             using var session = CreateSession();
             session.AddInputSource(new AlphaInputSource());
             _dashboard.Attach(session);
-            _dashboard.FrameTick(PAST_INTERVAL);
+            _dashboard.Refresh(PAST_INTERVAL);
 
-            Assert.That(() => _dashboard.FrameTick(PAST_INTERVAL), Is.Not.AllocatingGCMemory());
+            Assert.That(() => _dashboard.Refresh(PAST_INTERVAL), Is.Not.AllocatingGCMemory());
         }
 
         [Test]

@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -126,7 +127,7 @@ namespace Drone.App.Tests {
         }
 
         [UnityTest]
-        public IEnumerator Display_IsAttachedReadOnlyTickedAndDetached() {
+        public IEnumerator Display_IsAttachedReadOnlyAndDetached() {
             CreateRoot();
             var frontend = AddFrontend();
             var displayObject = new GameObject("Display");
@@ -140,7 +141,6 @@ namespace Drone.App.Tests {
             Assert.IsNotNull(display.Readout);
             Assert.IsNotInstanceOf<IDroneOperator>(display.Readout);
             Assert.AreEqual(frontend.Session.AuthState, display.Readout.AuthState);
-            Assert.Greater(display.FrameTicks, 0);
 
             Object.Destroy(_root);
             yield return null;
@@ -155,67 +155,12 @@ namespace Drone.App.Tests {
             Assert.IsNotNull(frontend.Session.ActiveSource);
         }
 
-        [UnityTest]
-        public IEnumerator Running_TicksFrontends() {
-            var frontend = StartWithFrontend(false, FactoryFor(new InstantProvider(AuthResult.Success())));
+        [Test]
+        public void Bootstrapper_RunsBeforeDefaultScripts() {
+            var order = typeof(Bootstrapper).GetCustomAttribute<DefaultExecutionOrder>();
 
-            yield return WaitFixedTicks(2);
-            yield return null;
-            yield return null;
-
-            Assert.Greater(frontend.FixedTicks, 0);
-            Assert.Greater(frontend.FrameTicks, 0);
-        }
-
-        [UnityTest]
-        public IEnumerator Running_DestroyedFrontend_IsDetachedOnceAndOthersKeepTicking() {
-            CreateRoot();
-            var destroyed = AddFrontend();
-            var survivor = AddFrontend();
-            Start(false, FactoryFor(new InstantProvider(AuthResult.Success())));
-
-            Object.Destroy(destroyed.gameObject);
-            yield return null;
-            var destroyedFrameTicks = destroyed.FrameTicks;
-            var destroyedFixedTicks = destroyed.FixedTicks;
-            var survivorFixedTicks = survivor.FixedTicks;
-            var survivorFrameTicks = survivor.FrameTicks;
-
-            yield return WaitFixedTicks(2);
-            yield return null;
-            yield return null;
-
-            Assert.AreEqual(destroyedFrameTicks, destroyed.FrameTicks);
-            Assert.AreEqual(destroyedFixedTicks, destroyed.FixedTicks);
-            Assert.Greater(survivor.FixedTicks, survivorFixedTicks);
-            Assert.Greater(survivor.FrameTicks, survivorFrameTicks);
-            Assert.AreEqual(1, destroyed.DetachCount);
-
-            Object.Destroy(_root);
-            yield return null;
-
-            Assert.AreEqual(1, destroyed.DetachCount);
-            LogAssert.NoUnexpectedReceived();
-        }
-
-        [UnityTest]
-        public IEnumerator Running_DestroyedDisplay_IsDetachedOnce() {
-            CreateRoot();
-            var displayObject = new GameObject("Display");
-            displayObject.transform.SetParent(_root.transform, false);
-            var display = displayObject.AddComponent<FakeDisplay>();
-            Start(false, FactoryFor(new InstantProvider(AuthResult.Success())));
-
-            Object.Destroy(displayObject);
-            yield return null;
-            yield return null;
-
-            Assert.AreEqual(1, display.DetachCount);
-
-            Object.Destroy(_root);
-            yield return null;
-
-            Assert.AreEqual(1, display.DetachCount);
+            Assert.IsNotNull(order);
+            Assert.Less(order.order, 0);
         }
 
         [UnityTest]
@@ -357,7 +302,7 @@ namespace Drone.App.Tests {
         }
 
         [UnityTest]
-        public IEnumerator Awake_ThrowingAttach_LogsDetachesAndNeverTicksThatFrontend() {
+        public IEnumerator Awake_ThrowingAttach_LogsDetachesAndKeepsTheOthers() {
             CreateRoot();
             var broken = AddFrontend();
             var working = AddFrontend();
@@ -365,55 +310,16 @@ namespace Drone.App.Tests {
             LogAssert.Expect(LogType.Exception, new Regex("Attach failed"));
 
             Start(false, FactoryFor(new InstantProvider(AuthResult.Success())));
-            yield return WaitFixedTicks(2);
-            yield return null;
 
             Assert.AreEqual(1, broken.DetachCount);
-            Assert.AreEqual(0, broken.FixedTicks);
-            Assert.AreEqual(0, broken.FrameTicks);
-            Assert.Greater(working.FixedTicks, 0);
-            Assert.Greater(working.FrameTicks, 0);
-        }
-
-        [UnityTest]
-        public IEnumerator Running_ThrowingFrameTick_IsDroppedAndDetachedOnce() {
-            CreateRoot();
-            var broken = AddFrontend();
-            var survivor = AddFrontend();
-            broken.ThrowOnFrameTick = true;
-            LogAssert.Expect(LogType.Exception, new Regex("FrameTick failed"));
-
-            Start(false, FactoryFor(new InstantProvider(AuthResult.Success())));
-            yield return null;
-            yield return null;
-            yield return null;
-
-            Assert.AreEqual(1, broken.FrameTicks);
-            Assert.AreEqual(1, broken.DetachCount);
-            Assert.Greater(survivor.FrameTicks, 1);
+            Assert.IsNull(broken.Session);
+            Assert.IsNotNull(working.Session);
 
             Object.Destroy(_root);
             yield return null;
 
             Assert.AreEqual(1, broken.DetachCount);
-            LogAssert.NoUnexpectedReceived();
-        }
-
-        [UnityTest]
-        public IEnumerator Running_ThrowingFixedTick_IsDroppedAndOthersKeepTicking() {
-            CreateRoot();
-            var broken = AddFrontend();
-            var survivor = AddFrontend();
-            broken.ThrowOnFixedTick = true;
-            LogAssert.Expect(LogType.Exception, new Regex("FixedTick failed"));
-
-            Start(false, FactoryFor(new InstantProvider(AuthResult.Success())));
-            yield return WaitFixedTicks(3);
-
-            Assert.AreEqual(1, broken.FixedTicks);
-            Assert.AreEqual(1, broken.DetachCount);
-            Assert.Greater(survivor.FixedTicks, 1);
-            LogAssert.NoUnexpectedReceived();
+            Assert.AreEqual(1, working.DetachCount);
         }
 
         [UnityTest]

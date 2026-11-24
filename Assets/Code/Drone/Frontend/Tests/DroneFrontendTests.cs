@@ -79,5 +79,29 @@ namespace Drone.Frontend.Tests {
             Assert.IsNull(_session.ActiveSource);
             Assert.IsNull(GameObject.Find("Drone"));
         }
+
+        [UnityTest]
+        public IEnumerator Detached_KeepsRunningWithoutErrors() {
+            _frontend.Detach();
+
+            yield return new WaitForFixedUpdate();
+            yield return new WaitForFixedUpdate();
+            yield return null;
+
+            LogAssert.NoUnexpectedReceived();
+        }
+
+        [UnityTest]
+        public IEnumerator NeverAttached_RunsWithoutErrors() {
+            var unattached = new GameObject("Unattached").AddComponent<DroneFrontend>();
+
+            yield return new WaitForFixedUpdate();
+            yield return new WaitForFixedUpdate();
+            yield return null;
+
+            Object.Destroy(unattached.gameObject);
+            yield return null;
+            LogAssert.NoUnexpectedReceived();
+        }
     }
 }

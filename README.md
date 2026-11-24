@@ -23,7 +23,7 @@ Drone.Dashboard ─────────────────────�
 | `Drone.Dashboard` | Telemetry readout | Yes |
 
 - **Only the composition root sees the implementation.** Providers, Frontend and Dashboard reference `Drone.Contracts` alone, so the compiler stops them from naming the gate, the controller or the session. Only `Drone.App` references `Drone.Core`.
-- **One composition root, no singletons.** `Bootstrapper` builds the gate, router, controller and session, and finds clients on its children through `IDroneFrontend` and `IDroneDisplay`. It references neither frontend assembly, so deleting one needs no code changes. The keyboard source is the one exception: `DroneFrontend` creates it, because `Drone.App` can't reference that assembly.
+- **One composition root, no singletons.** `Bootstrapper` builds the gate, router, controller and session, and finds clients on its children through `IDroneFrontend` and `IDroneDisplay`. It references neither frontend assembly, so deleting one needs no code changes. It only ticks the simulation; clients run in their own `Update` and `FixedUpdate`, and `[DefaultExecutionOrder(-100)]` makes the session tick before any frontend reads telemetry. The keyboard source is the one exception: `DroneFrontend` creates it, because `Drone.App` can't reference that assembly.
 - **Flight only knows `IFlightClearance` and `IFlightInputSource`.** It never sees a provider or where its input comes from. Sources can be added, removed and swapped at runtime.
 - **Clients get only what they need.** Frontends get `IDroneOperator`, which can arm, disarm, revoke, swap sources and request a provider by its number. They never see a provider object, so the gate is the only code that calls one. Displays get `IDroneReadout` through a read-only proxy the session owns, so casting it can't reach `Arm` or `Revoke`.
 - **State changes are pushed, telemetry is pulled.** Auth, flight and input changes raise events. The dashboard's handler only sets a dirty flag, so it never runs UI code inside the flight tick. Altitude and speed change continuously, so it polls them at 10 Hz.
@@ -39,7 +39,7 @@ Implement `IAuthorizationProvider`, add a small `AuthorizationProviderFactory` s
 - **The newest request wins.** It cancels the previous attempt, and late results are ignored.
 - **Failures fail closed.** A thrown or faulted attempt becomes `Failed`. Losing clearance in flight makes the drone land itself.
 - **Bad input becomes neutral input.** A source that throws or returns NaN or infinity is reported as a fault on the dashboard, and the drone hovers.
-- **One failing client can't stop the others.** A frontend or factory that throws is logged and dropped.
+- **One failing client can't stop the others.** A factory or `Attach` that throws is logged, and that client is detached. After that, each client runs in its own `Update`, so Unity isolates an exception to the component that threw it.
 - **Shutdown cancels everything.** Destroying `Boot` detaches every client, then disposes the session, which cancels any pending attempt.
 
 ## Running without UI
@@ -74,5 +74,5 @@ Press `1`, then `F`, and the autopilot climbs to 3 m.
 
 - **Kinematic simulation:** no collisions, wind or physics engine, so Core runs and tests without Unity.
 - **Requesting a slow provider in flight lands the drone,** because clearance drops while it's `Authorizing`. This fails closed.
-- **Event subscribers must not throw.** Auth, flight and input events fire immediately inside whichever call changed the state, such as `Request`, `Revoke`, `Arm` or `Tick`. A throwing handler interrupts that call, and if the call came from a frontend, `Bootstrapper` drops that frontend.
+- **Event subscribers must not throw.** Auth, flight and input events fire immediately inside whichever call changed the state, such as `Request`, `Revoke`, `Arm` or `Tick`. A throwing handler interrupts that call. If the call was the session's `Tick`, that fixed step's flight update is cut short.
 - **Movement is world-relative,** and the autopilot only controls altitude.

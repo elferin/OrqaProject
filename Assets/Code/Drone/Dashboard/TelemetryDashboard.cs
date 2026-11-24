@@ -1,4 +1,3 @@
-using System;
 using Drone.Contracts;
 using TMPro;
 using UnityEngine;
@@ -34,21 +33,27 @@ namespace Drone.Dashboard {
             _statusDirty = true;
         }
 
-        private void Update() {
+        private void Update() => Refresh(Time.unscaledDeltaTime);
+
+        public void Refresh(float deltaTime) {
             if (_readout == null) {
                 return;
             }
-            
+
             if (_statusDirty) {
                 _statusDirty = false;
                 ShowStatus();
             }
 
             var telemetry = _readout.Telemetry;
-            TickNumbers(Time.deltaTime, telemetry.Altitude, telemetry.Speed);
+            TickNumbers(deltaTime, telemetry.Altitude, telemetry.Speed);
         }
 
         public void Detach() {
+            if (_readout == null) {
+                return;
+            }
+
             _readout.AuthStateChanged -= MarkStatusDirty;
             _readout.FlightStateChanged -= MarkStatusDirty;
             _readout.InputChanged -= MarkStatusDirty;

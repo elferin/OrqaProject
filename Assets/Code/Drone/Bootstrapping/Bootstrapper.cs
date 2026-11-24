@@ -6,7 +6,6 @@ using Drone.Core.Flight;
 using Drone.Core.Session;
 using Drone.Providers;
 using UnityEngine;
-using Object = UnityEngine.Object;
 
 namespace Drone.App {
 
@@ -20,7 +19,6 @@ namespace Drone.App {
         [SerializeField] private AuthorizationProviderFactory[] authorizationProviderFactories = Array.Empty<AuthorizationProviderFactory>();
 
         private readonly List<IDroneClient> _clients = new();
-        private readonly List<IDroneFrontend> _frontends = new();
         private DroneSession _session;
 
         private void Awake() {
@@ -37,7 +35,6 @@ namespace Drone.App {
                 try {
                     frontend.Attach(_session);
                     _clients.Add(frontend);
-                    _frontends.Add(frontend);
                 }
                 catch (Exception exception) {
                     Debug.LogException(exception, this);
@@ -71,23 +68,7 @@ namespace Drone.App {
                 DetachSafely(client);
             }
             _clients.Clear();
-            _frontends.Clear();
             _session?.Dispose();
-        }
-
-        private void DropClient(IDroneClient client, Exception exception) {
-
-            Debug.LogException(exception, this);
-            RemoveClient(client);
-        }
-
-        private void RemoveClient(IDroneClient client) {
-
-            _clients.Remove(client);
-            if (client is IDroneFrontend frontend) {
-                _frontends.Remove(frontend);
-            }
-            DetachSafely(client);
         }
 
         private void DetachSafely(IDroneClient client) {
@@ -98,11 +79,6 @@ namespace Drone.App {
             catch (Exception exception) {
                 Debug.LogException(exception, this);
             }
-        }
-
-        private static bool IsAlive(IDroneClient client) {
-
-            return !(client is Object unityObject) || unityObject != null;
         }
 
         private FlightProfile ValidatedProfile() {
