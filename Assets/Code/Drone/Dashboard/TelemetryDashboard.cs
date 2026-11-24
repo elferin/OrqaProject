@@ -33,14 +33,18 @@ namespace Drone.Dashboard {
             _statusDirty = true;
         }
 
-        public void FrameTick(float deltaTime) {
+        private void Update() {
+            if (_readout == null) {
+                return;
+            }
+            
             if (_statusDirty) {
                 _statusDirty = false;
                 ShowStatus();
             }
 
             var telemetry = _readout.Telemetry;
-            TickNumbers(deltaTime, telemetry.Altitude, telemetry.Speed);
+            TickNumbers(Time.deltaTime, telemetry.Altitude, telemetry.Speed);
         }
 
         public void Detach() {

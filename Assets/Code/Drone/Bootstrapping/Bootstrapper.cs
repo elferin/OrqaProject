@@ -10,6 +10,7 @@ using Object = UnityEngine.Object;
 
 namespace Drone.App {
 
+    [DefaultExecutionOrder(-100)]
     public sealed class Bootstrapper : MonoBehaviour {
 
         [SerializeField] private bool autoStart;
@@ -60,46 +61,8 @@ namespace Drone.App {
             }
         }
 
-        private void Update() {
-
-            for (var i = 0; i < _clients.Count; i++) {
-                var client = _clients[i];
-                if (!IsAlive(client)) {
-                    i--;
-                    RemoveClient(client);
-                    continue;
-                }
-
-                try {
-                    client.FrameTick(Time.unscaledDeltaTime);
-                }
-                catch (Exception exception) {
-                    i--;
-                    DropClient(client, exception);
-                }
-            }
-        }
-
         private void FixedUpdate() {
-
             _session.Tick(Time.fixedDeltaTime);
-
-            for (var i = 0; i < _frontends.Count; i++) {
-                var frontend = _frontends[i];
-                if (!IsAlive(frontend)) {
-                    i--;
-                    RemoveClient(frontend);
-                    continue;
-                }
-
-                try {
-                    frontend.FixedTick();
-                }
-                catch (Exception exception) {
-                    i--;
-                    DropClient(frontend, exception);
-                }
-            }
         }
 
         private void OnDestroy() {

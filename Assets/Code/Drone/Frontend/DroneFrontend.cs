@@ -18,13 +18,17 @@ namespace Drone.Frontend {
             _view = new DroneView();
         }
 
-        public void FixedTick() {
-            _view.Capture(_session.Telemetry);
-        }
-
-        public void FrameTick(float deltaTime) {
+        private void Update() {
+            if (_session == null) {
+                return;
+            }
+            
             _controls.Tick();
             _view.Render();
+        }
+
+        private void FixedUpdate() {
+            _view.Capture(_session.Telemetry);
         }
 
         public void Detach() {
