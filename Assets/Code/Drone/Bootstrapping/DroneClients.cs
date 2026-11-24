@@ -5,20 +5,18 @@ using Drone.Core.Session;
 using UnityEngine;
 
 namespace Drone.App {
-    
-    public class DroneClients {
-        
+
+    internal sealed class DroneClients {
+
         private readonly List<IDroneClient> _clients = new();
         private GameObject _root;
-        private DroneSession _session;
-        
+
         public void AttachAll(GameObject root, DroneSession session) {
             _root = root;
-            _session = session;
-            
+
             foreach (var frontend in root.GetComponentsInChildren<IDroneFrontend>()) {
                 try {
-                    frontend.Attach(_session);
+                    frontend.Attach(session);
                     _clients.Add(frontend);
                 }
                 catch (Exception exception) {
@@ -29,7 +27,7 @@ namespace Drone.App {
 
             foreach (var display in root.GetComponentsInChildren<IDroneDisplay>()) {
                 try {
-                    display.Attach(_session.Readout);
+                    display.Attach(session.Readout);
                     _clients.Add(display);
                 }
                 catch (Exception exception) {
@@ -44,7 +42,6 @@ namespace Drone.App {
                 DetachSafely(client);
             }
             _clients.Clear();
-            _session?.Dispose();
         }
 
         private void DetachSafely(IDroneClient client) {

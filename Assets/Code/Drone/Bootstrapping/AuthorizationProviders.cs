@@ -6,9 +6,9 @@ using Object = UnityEngine.Object;
 
 namespace Drone.App {
     
-    internal static class AuthorizationProvidersHelper {
+    internal static class AuthorizationProviders {
 
-        public static IReadOnlyList<IAuthorizationProvider> CreateProviders(
+        public static IReadOnlyList<IAuthorizationProvider> Create(
             AuthorizationProviderFactory[] authorizationProviderFactories,
             Object context) {
             

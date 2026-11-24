@@ -24,7 +24,7 @@ namespace Drone.App {
         }
 
         private void OnValidate() {
-            if(!profile.IsValid) {
+            if (!profile.IsValid) {
                 Debug.LogWarning("Flight profile values must be positive and finite", this);
             }
         }

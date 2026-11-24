@@ -21,15 +21,15 @@ namespace Drone.App {
 
         private void Awake() {
 
-            var providers = AuthorizationProvidersHelper.CreateProviders(authorizationProviderFactories, this);
+            var providers = AuthorizationProviders.Create(authorizationProviderFactories, this);
             var gate = new AuthorizationGate();
             var router = new FlightInputRouter();
             var controller = new FlightController(gate, router, FlightProfileAsset.ValidateOrDefault(flightProfile, this));
             _session = new DroneSession(gate, router, controller, providers);
-            _droneClients = new DroneClients();
             var autopilot = new AutopilotInputSource(() => _session.Controller.Telemetry.Altitude, autopilotAltitude);
             _session.AddInputSource(autopilot);
-            
+
+            _droneClients = new DroneClients();
             _droneClients.AttachAll(gameObject, _session);
 
             if (autoStart && providers.Count > 0) {
@@ -42,7 +42,8 @@ namespace Drone.App {
         }
 
         private void OnDestroy() {
-            _droneClients.DetachAll();
+            _droneClients?.DetachAll();
+            _session?.Dispose();
         }
     }
 }
